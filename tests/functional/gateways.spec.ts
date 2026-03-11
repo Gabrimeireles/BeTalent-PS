@@ -1,22 +1,28 @@
 import { test } from '@japa/runner'
-import User from '#models/user'
 import testUtils from '@adonisjs/core/services/test_utils'
-import { createBearerToken, createGatewayRecord } from './helpers.js'
+import { createBearerToken } from './helpers.js'
+import { UserFactory } from '#database/factories/user_factory'
+import { GatewayFactory } from '#database/factories/gateway_factory'
 
 test.group('Gateways', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('admin can activate/deactivate gateway and change priority', async ({ client, assert }) => {
-    const admin = await User.create({
+    const admin = await UserFactory.merge({
       email: 'admin@betalent.tech',
       password: 'AdminSecret123',
       role: 'ADMIN',
-    })
+    }).create()
     const adminToken = await createBearerToken(admin)
-    const gatewayId = await createGatewayRecord('Gateway Test', 1, true)
+    const gateway = await GatewayFactory.merge({
+      name: 'Gateway Test',
+      priority: 1,
+      isActive: true,
+      url: 'https://gateway-test.local',
+    }).create()
 
     const statusResponse = await client
-      .patch(`/gateways/${gatewayId}/status`)
+      .patch(`/gateways/${gateway.id}/status`)
       .header('Authorization', `Bearer ${adminToken}`)
       .json({ isActive: false })
 
@@ -25,7 +31,7 @@ test.group('Gateways', (group) => {
     assert.equal(statusBody.data.isActive, false)
 
     const priorityResponse = await client
-      .patch(`/gateways/${gatewayId}/priority`)
+      .patch(`/gateways/${gateway.id}/priority`)
       .header('Authorization', `Bearer ${adminToken}`)
       .json({ priority: 10 })
 
@@ -35,16 +41,21 @@ test.group('Gateways', (group) => {
   })
 
   test('manager cannot update gateway settings', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager2@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
-    const gatewayId = await createGatewayRecord('Gateway Restricted', 2, true)
+    const gateway = await GatewayFactory.merge({
+      name: 'Gateway Restricted',
+      priority: 2,
+      isActive: true,
+      url: 'https://gateway-restricted.local',
+    }).create()
 
     const response = await client
-      .patch(`/gateways/${gatewayId}/priority`)
+      .patch(`/gateways/${gateway.id}/priority`)
       .header('Authorization', `Bearer ${managerToken}`)
       .json({ priority: 4 })
 
@@ -52,11 +63,11 @@ test.group('Gateways', (group) => {
   })
 
   test('gateway status update returns 404 when not found', async ({ client }) => {
-    const admin = await User.create({
+    const admin = await UserFactory.merge({
       email: 'admin.gateway404@betalent.tech',
       password: 'AdminSecret123',
       role: 'ADMIN',
-    })
+    }).create()
     const adminToken = await createBearerToken(admin)
 
     const response = await client
@@ -68,16 +79,21 @@ test.group('Gateways', (group) => {
   })
 
   test('gateway priority validation rejects negative values', async ({ client }) => {
-    const admin = await User.create({
+    const admin = await UserFactory.merge({
       email: 'admin.gateway.validation@betalent.tech',
       password: 'AdminSecret123',
       role: 'ADMIN',
-    })
+    }).create()
     const adminToken = await createBearerToken(admin)
-    const gatewayId = await createGatewayRecord('Gateway Priority Validation', 2, true)
+    const gateway = await GatewayFactory.merge({
+      name: 'Gateway Priority Validation',
+      priority: 2,
+      isActive: true,
+      url: 'https://gateway-priority-validation.local',
+    }).create()
 
     const response = await client
-      .patch(`/gateways/${gatewayId}/priority`)
+      .patch(`/gateways/${gateway.id}/priority`)
       .header('Authorization', `Bearer ${adminToken}`)
       .json({ priority: -1 })
 
@@ -85,16 +101,21 @@ test.group('Gateways', (group) => {
   })
 
   test('gateway status validation rejects non-boolean', async ({ client }) => {
-    const admin = await User.create({
+    const admin = await UserFactory.merge({
       email: 'admin.gateway.bool@betalent.tech',
       password: 'AdminSecret123',
       role: 'ADMIN',
-    })
+    }).create()
     const adminToken = await createBearerToken(admin)
-    const gatewayId = await createGatewayRecord('Gateway Status Validation', 2, true)
+    const gateway = await GatewayFactory.merge({
+      name: 'Gateway Status Validation',
+      priority: 2,
+      isActive: true,
+      url: 'https://gateway-status-validation.local',
+    }).create()
 
     const response = await client
-      .patch(`/gateways/${gatewayId}/status`)
+      .patch(`/gateways/${gateway.id}/status`)
       .header('Authorization', `Bearer ${adminToken}`)
       .json({ isActive: 'yes' })
 

@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import User from '#models/user'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { createBearerToken } from './helpers.js'
+import { UserFactory } from '#database/factories/user_factory'
 
 test.group('Users', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -13,11 +14,11 @@ test.group('Users', (group) => {
   })
 
   test('manager can register users', async ({ client, assert }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
 
     const response = await client
@@ -37,11 +38,11 @@ test.group('Users', (group) => {
   })
 
   test('regular user cannot register users', async ({ client }) => {
-    const user = await User.create({
+    const user = await UserFactory.merge({
       email: 'user@betalent.tech',
       password: 'UserSecret123',
       role: 'USER',
-    })
+    }).create()
     const userToken = await createBearerToken(user)
 
     const response = await client
@@ -58,11 +59,11 @@ test.group('Users', (group) => {
   })
 
   test('register validation fails with invalid role', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.validation@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
 
     const response = await client
@@ -79,11 +80,11 @@ test.group('Users', (group) => {
   })
 
   test('register validation fails with password mismatch', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.confirm@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
 
     const response = await client
@@ -100,17 +101,17 @@ test.group('Users', (group) => {
   })
 
   test('register fails when email already exists', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.unique@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
-    await User.create({
+    await UserFactory.merge({
       email: 'existing@betalent.tech',
       password: 'ExistingSecret123',
       role: 'USER',
-    })
+    }).create()
 
     const response = await client
       .post('/users/register')
@@ -126,11 +127,11 @@ test.group('Users', (group) => {
   })
 
   test('manager receives 404 when user is not found', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.notfound@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
 
     const response = await client
@@ -141,22 +142,22 @@ test.group('Users', (group) => {
   })
 
   test('manager receives 409 when updating user with duplicated email', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.update@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
-    const userA = await User.create({
+    const userA = await UserFactory.merge({
       email: 'user.a@betalent.tech',
       password: 'UserSecret123',
       role: 'USER',
-    })
-    await User.create({
+    }).create()
+    await UserFactory.merge({
       email: 'user.b@betalent.tech',
       password: 'UserSecret123',
       role: 'USER',
-    })
+    }).create()
 
     const response = await client
       .put(`/users/${userA.id}`)
@@ -169,17 +170,17 @@ test.group('Users', (group) => {
   })
 
   test('manager can delete user', async ({ client }) => {
-    const manager = await User.create({
+    const manager = await UserFactory.merge({
       email: 'manager.delete@betalent.tech',
       password: 'ManagerSecret123',
       role: 'MANAGER',
-    })
+    }).create()
     const managerToken = await createBearerToken(manager)
-    const target = await User.create({
+    const target = await UserFactory.merge({
       email: 'target.delete@betalent.tech',
       password: 'UserSecret123',
       role: 'USER',
-    })
+    }).create()
 
     const response = await client
       .delete(`/users/${target.id}`)
