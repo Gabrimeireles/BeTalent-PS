@@ -20,4 +20,8 @@ export interface ApiDefinition {
     update: typeof routes['users.update']
     destroy: typeof routes['users.destroy']
   }
+  gateways: {
+    updateStatus: typeof routes['gateways.update_status']
+    updatePriority: typeof routes['gateways.update_priority']
+  }
 }

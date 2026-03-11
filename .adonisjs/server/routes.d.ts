@@ -14,6 +14,8 @@ export type ScannedRoutes = {
     'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'gateways.update_status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'gateways.update_priority': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
     'docs.ui': { paramsTuple?: []; params?: {} }
@@ -39,6 +41,10 @@ export type ScannedRoutes = {
   }
   DELETE: {
     'users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  PATCH: {
+    'gateways.update_status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'gateways.update_priority': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

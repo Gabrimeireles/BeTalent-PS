@@ -9,10 +9,11 @@
 
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
-import AccessTokenController from '#controllers/access_token_controller'
-import ProfileController from '#controllers/profile_controller'
-import UsersController from '#controllers/users_controller'
-import DocsController from '#controllers/docs_controller'
+const AccessTokenController = () => import('#controllers/access_token_controller')
+const ProfileController = () => import('#controllers/profile_controller')
+const UsersController = () => import('#controllers/users_controller')
+const DocsController = () => import('#controllers/docs_controller')
+const GatewaysController = () => import('#controllers/gateways_controller')
 
 router.get('/', () => {
   return { hello: 'world' }
@@ -39,5 +40,13 @@ router
       })
       .prefix('/users')
       .use(middleware.role({ roles: ['ADMIN', 'MANAGER'] }))
+
+    router
+      .group(() => {
+        router.patch('/:id/status', [GatewaysController, 'updateStatus'])
+        router.patch('/:id/priority', [GatewaysController, 'updatePriority'])
+      })
+      .prefix('/gateways')
+      .use(middleware.role({ roles: ['ADMIN'] }))
   })
   .use(middleware.auth())

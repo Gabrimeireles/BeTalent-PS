@@ -66,6 +66,18 @@ const routes = {
     tokens: [{"old":"/users/:id","type":0,"val":"users","end":""},{"old":"/users/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['users.destroy']['types'],
   },
+  'gateways.update_status': {
+    methods: ["PATCH"],
+    pattern: '/gateways/:id/status',
+    tokens: [{"old":"/gateways/:id/status","type":0,"val":"gateways","end":""},{"old":"/gateways/:id/status","type":1,"val":"id","end":""},{"old":"/gateways/:id/status","type":0,"val":"status","end":""}],
+    types: placeholder as Registry['gateways.update_status']['types'],
+  },
+  'gateways.update_priority': {
+    methods: ["PATCH"],
+    pattern: '/gateways/:id/priority',
+    tokens: [{"old":"/gateways/:id/priority","type":0,"val":"gateways","end":""},{"old":"/gateways/:id/priority","type":1,"val":"id","end":""},{"old":"/gateways/:id/priority","type":0,"val":"priority","end":""}],
+    types: placeholder as Registry['gateways.update_priority']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }
