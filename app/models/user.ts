@@ -11,11 +11,7 @@ export default class User extends compose(UserSchema, withAuthFinder(hash)) {
   declare currentAccessToken?: AccessToken
 
   @beforeSave()
-  static async hashUserPassword(user: User) {
-    if (user.$dirty.password) {
-      user.password = await hash.make(user.password)
-    }
-
+  static async normalizeUserRole(user: User) {
     if (user.$dirty.role || !user.role) {
       user.role = normalizeRole(user.role)
     }
