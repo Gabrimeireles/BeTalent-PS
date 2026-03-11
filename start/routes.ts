@@ -9,29 +9,35 @@
 
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
-import { controllers } from '#generated/controllers'
+import AccessTokenController from '#controllers/access_token_controller'
+import ProfileController from '#controllers/profile_controller'
+import UsersController from '#controllers/users_controller'
+import DocsController from '#controllers/docs_controller'
 
 router.get('/', () => {
   return { hello: 'world' }
 })
 
+router.get('/docs', [DocsController, 'ui'])
+router.get('/docs/openapi.json', [DocsController, 'json'])
+
+router.post('/login', [AccessTokenController, 'store'])
+
 router
   .group(() => {
-    router
-      .group(() => {
-        router.post('signup', [controllers.NewAccount, 'store'])
-        router.post('login', [controllers.AccessToken, 'store'])
-        router.post('logout', [controllers.AccessToken, 'destroy']).use(middleware.auth())
-      })
-      .prefix('auth')
-      .as('auth')
+    router.post('/logout', [AccessTokenController, 'destroy'])
+
+    router.get('/account/profile', [ProfileController, 'show'])
 
     router
       .group(() => {
-        router.get('/profile', [controllers.Profile, 'show'])
+        router.post('/register', [UsersController, 'store'])
+        router.get('/', [UsersController, 'index'])
+        router.get('/:id', [UsersController, 'show'])
+        router.put('/:id', [UsersController, 'update'])
+        router.delete('/:id', [UsersController, 'destroy'])
       })
-      .prefix('account')
-      .as('profile')
-      .use(middleware.auth())
+      .prefix('/users')
+      .use(middleware.role({ roles: ['ADMIN', 'MANAGER'] }))
   })
-  .prefix('/api/v1')
+  .use(middleware.auth())

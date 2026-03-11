@@ -4,21 +4,41 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
-    'auth.new_account.store': { paramsTuple?: []; params?: {} }
-    'auth.access_token.store': { paramsTuple?: []; params?: {} }
-    'auth.access_token.destroy': { paramsTuple?: []; params?: {} }
-    'profile.profile.show': { paramsTuple?: []; params?: {} }
+    'docs.ui': { paramsTuple?: []; params?: {} }
+    'docs.json': { paramsTuple?: []; params?: {} }
+    'access_token.store': { paramsTuple?: []; params?: {} }
+    'access_token.destroy': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'users.store': { paramsTuple?: []; params?: {} }
+    'users.index': { paramsTuple?: []; params?: {} }
+    'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
-    'profile.profile.show': { paramsTuple?: []; params?: {} }
+    'docs.ui': { paramsTuple?: []; params?: {} }
+    'docs.json': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'users.index': { paramsTuple?: []; params?: {} }
+    'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   HEAD: {
-    'profile.profile.show': { paramsTuple?: []; params?: {} }
+    'docs.ui': { paramsTuple?: []; params?: {} }
+    'docs.json': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'users.index': { paramsTuple?: []; params?: {} }
+    'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   POST: {
-    'auth.new_account.store': { paramsTuple?: []; params?: {} }
-    'auth.access_token.store': { paramsTuple?: []; params?: {} }
-    'auth.access_token.destroy': { paramsTuple?: []; params?: {} }
+    'access_token.store': { paramsTuple?: []; params?: {} }
+    'access_token.destroy': { paramsTuple?: []; params?: {} }
+    'users.store': { paramsTuple?: []; params?: {} }
+  }
+  PUT: {
+    'users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  DELETE: {
+    'users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {
