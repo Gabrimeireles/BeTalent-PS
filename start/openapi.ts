@@ -3,7 +3,8 @@ export const openApiSpec = {
   info: {
     title: 'Be Talent API',
     version: '1.0.0',
-    description: 'Technical case API for auth, users, and role-based authorization',
+    description:
+      'Technical case API with authentication, RBAC, products, clients, transactions and gateway integrations',
   },
   servers: [
     {
@@ -19,6 +20,10 @@ export const openApiSpec = {
       },
     },
     schemas: {
+      Role: {
+        type: 'string',
+        enum: ['ADMIN', 'MANAGER', 'FINANCE', 'USER'],
+      },
       LoginBody: {
         type: 'object',
         required: ['email', 'token'],
@@ -32,17 +37,56 @@ export const openApiSpec = {
         required: ['email', 'password', 'passwordConfirmation', 'role'],
         properties: {
           email: { type: 'string', format: 'email' },
-          password: { type: 'string' },
-          passwordConfirmation: { type: 'string' },
-          role: { type: 'string', enum: ['ADMIN', 'MANAGER', 'FINANCE', 'USER'] },
+          password: { type: 'string', minLength: 8, maxLength: 32 },
+          passwordConfirmation: { type: 'string', minLength: 8, maxLength: 32 },
+          role: { $ref: '#/components/schemas/Role' },
         },
       },
       UpdateUserBody: {
         type: 'object',
         properties: {
           email: { type: 'string', format: 'email' },
-          password: { type: 'string' },
-          role: { type: 'string', enum: ['ADMIN', 'MANAGER', 'FINANCE', 'USER'] },
+          password: { type: 'string', minLength: 8, maxLength: 32 },
+          role: { $ref: '#/components/schemas/Role' },
+        },
+      },
+      UpdateGatewayStatusBody: {
+        type: 'object',
+        required: ['isActive'],
+        properties: {
+          isActive: { type: 'boolean' },
+        },
+      },
+      UpdateGatewayPriorityBody: {
+        type: 'object',
+        required: ['priority'],
+        properties: {
+          priority: { type: 'integer', minimum: 0 },
+        },
+      },
+      ProductBody: {
+        type: 'object',
+        required: ['name', 'amount'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 120 },
+          amount: { type: 'integer', minimum: 1 },
+        },
+      },
+      TransactionBody: {
+        type: 'object',
+        required: ['amount', 'name', 'email', 'cardNumber', 'cvv'],
+        properties: {
+          amount: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1, maxLength: 120 },
+          email: { type: 'string', format: 'email' },
+          cardNumber: { type: 'string', minLength: 16, maxLength: 16 },
+          cvv: { type: 'string', minLength: 3, maxLength: 3 },
+        },
+      },
+      ErrorMessage: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
         },
       },
     },
@@ -61,21 +105,30 @@ export const openApiSpec = {
           },
         },
         responses: {
-          '200': {
-            description: 'Authenticated',
-          },
+          '200': { description: 'Authenticated' },
+          '400': { description: 'Invalid user credentials' },
         },
       },
     },
     '/logout': {
       post: {
         tags: ['Auth'],
-        summary: 'Logout and revoke token',
+        summary: 'Logout and revoke current access token',
         security: [{ bearerAuth: [] }],
         responses: {
-          '200': {
-            description: 'Token revoked',
-          },
+          '200': { description: 'Token revoked' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/account/profile': {
+      get: {
+        tags: ['Account'],
+        summary: 'Get current user profile',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Profile' },
+          '401': { description: 'Unauthorized' },
         },
       },
     },
@@ -93,9 +146,10 @@ export const openApiSpec = {
           },
         },
         responses: {
-          '201': {
-            description: 'User created',
-          },
+          '201': { description: 'User created' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '422': { description: 'Validation error' },
         },
       },
     },
@@ -105,9 +159,9 @@ export const openApiSpec = {
         summary: 'List users (ADMIN or MANAGER)',
         security: [{ bearerAuth: [] }],
         responses: {
-          '200': {
-            description: 'Users list',
-          },
+          '200': { description: 'Users list' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
         },
       },
     },
@@ -119,6 +173,8 @@ export const openApiSpec = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
           '200': { description: 'User details' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
           '404': { description: 'User not found' },
         },
       },
@@ -137,7 +193,11 @@ export const openApiSpec = {
         },
         responses: {
           '200': { description: 'User updated' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
           '404': { description: 'User not found' },
+          '409': { description: 'Email already in use' },
+          '422': { description: 'Validation error' },
         },
       },
       delete: {
@@ -147,17 +207,224 @@ export const openApiSpec = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
           '200': { description: 'User deleted' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
           '404': { description: 'User not found' },
         },
       },
     },
-    '/account/profile': {
+    '/gateways/{id}/status': {
+      patch: {
+        tags: ['Gateways'],
+        summary: 'Activate/deactivate gateway (ADMIN)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateGatewayStatusBody' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Gateway status updated' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Gateway not found' },
+          '422': { description: 'Validation error' },
+        },
+      },
+    },
+    '/gateways/{id}/priority': {
+      patch: {
+        tags: ['Gateways'],
+        summary: 'Change gateway priority (ADMIN)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateGatewayPriorityBody' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Gateway priority updated' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Gateway not found' },
+          '422': { description: 'Validation error' },
+        },
+      },
+    },
+    '/products': {
       get: {
-        tags: ['Account'],
-        summary: 'Get current user profile',
+        tags: ['Products'],
+        summary: 'List products (ADMIN, MANAGER, FINANCE)',
         security: [{ bearerAuth: [] }],
         responses: {
-          '200': { description: 'Profile' },
+          '200': { description: 'Products list' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+        },
+      },
+      post: {
+        tags: ['Products'],
+        summary: 'Create product (ADMIN, MANAGER, FINANCE)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ProductBody' },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Product created' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '422': { description: 'Validation error' },
+        },
+      },
+    },
+    '/products/{id}': {
+      get: {
+        tags: ['Products'],
+        summary: 'Get product by id (ADMIN, MANAGER, FINANCE)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Product details' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Product not found' },
+        },
+      },
+      put: {
+        tags: ['Products'],
+        summary: 'Update product (ADMIN, MANAGER, FINANCE)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ProductBody' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Product updated' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Product not found' },
+          '422': { description: 'Validation error' },
+        },
+      },
+      delete: {
+        tags: ['Products'],
+        summary: 'Delete product (ADMIN, MANAGER, FINANCE)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Product deleted' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Product not found' },
+        },
+      },
+    },
+    '/clients': {
+      get: {
+        tags: ['Clients'],
+        summary: 'List all clients',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Clients list' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/clients/{id}': {
+      get: {
+        tags: ['Clients'],
+        summary: 'Get client details with purchases',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Client details' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Client not found' },
+        },
+      },
+    },
+    '/transactions': {
+      get: {
+        tags: ['Transactions'],
+        summary: 'List all transactions',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Transactions list' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['Transactions'],
+        summary: 'Create transaction',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/TransactionBody' },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Transaction created' },
+          '400': {
+            description: 'No active gateway available or gateway business error',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorMessage' },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+          '422': { description: 'Validation error' },
+          '502': { description: 'Gateway integration failed' },
+        },
+      },
+    },
+    '/transactions/{id}': {
+      get: {
+        tags: ['Transactions'],
+        summary: 'Get transaction details by id',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Transaction details' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Transaction not found' },
+        },
+      },
+    },
+    '/transactions/{id}/refund': {
+      post: {
+        tags: ['Transactions'],
+        summary: 'Refund a completed transaction (ADMIN or FINANCE)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Transaction refunded' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '404': { description: 'Transaction not found' },
+          '409': { description: 'Only completed transactions can be refunded' },
+          '502': { description: 'Gateway integration failed' },
         },
       },
     },
