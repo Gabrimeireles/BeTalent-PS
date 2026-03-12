@@ -24,4 +24,21 @@ export interface ApiDefinition {
     updateStatus: typeof routes['gateways.update_status']
     updatePriority: typeof routes['gateways.update_priority']
   }
+  products: {
+    index: typeof routes['products.index']
+    store: typeof routes['products.store']
+    show: typeof routes['products.show']
+    update: typeof routes['products.update']
+    destroy: typeof routes['products.destroy']
+  }
+  clients: {
+    index: typeof routes['clients.index']
+    show: typeof routes['clients.show']
+  }
+  transactions: {
+    index: typeof routes['transactions.index']
+    show: typeof routes['transactions.show']
+    store: typeof routes['transactions.store']
+    refund: typeof routes['transactions.refund']
+  }
 }

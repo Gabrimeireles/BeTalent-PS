@@ -9,7 +9,7 @@ export const TransactionFactory = factory
       clientId: 0,
       gatewayId: 0,
       externalId: `txn_${faker.string.alphanumeric(24).toLowerCase()}`,
-      status: 'pending',
+      status: 'pending' as const,
       amount: 0,
       cardLastNumbers: cardNumber.slice(-4),
     }

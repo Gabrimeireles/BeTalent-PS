@@ -14,6 +14,9 @@ const ProfileController = () => import('#controllers/profile_controller')
 const UsersController = () => import('#controllers/users_controller')
 const DocsController = () => import('#controllers/docs_controller')
 const GatewaysController = () => import('#controllers/gateways_controller')
+const ProductsController = () => import('#controllers/products_controller')
+const ClientsController = () => import('#controllers/clients_controller')
+const TransactionsController = () => import('#controllers/transactions_controller')
 
 router.get('/', () => {
   return { hello: 'world' }
@@ -48,5 +51,34 @@ router
       })
       .prefix('/gateways')
       .use(middleware.role({ roles: ['ADMIN'] }))
+
+    router
+      .group(() => {
+        router.get('/', [ProductsController, 'index'])
+        router.post('/', [ProductsController, 'store'])
+        router.get('/:id', [ProductsController, 'show'])
+        router.put('/:id', [ProductsController, 'update'])
+        router.delete('/:id', [ProductsController, 'destroy'])
+      })
+      .prefix('/products')
+      .use(middleware.role({ roles: ['ADMIN', 'MANAGER', 'FINANCE'] }))
+
+    router
+      .group(() => {
+        router.get('/', [ClientsController, 'index'])
+        router.get('/:id', [ClientsController, 'show'])
+      })
+      .prefix('/clients')
+
+    router
+      .group(() => {
+        router.get('/', [TransactionsController, 'index'])
+        router.get('/:id', [TransactionsController, 'show'])
+        router.post('/', [TransactionsController, 'store'])
+        router
+          .post('/:id/refund', [TransactionsController, 'refund'])
+          .use(middleware.role({ roles: ['ADMIN', 'FINANCE'] }))
+      })
+      .prefix('/transactions')
   })
   .use(middleware.auth())
