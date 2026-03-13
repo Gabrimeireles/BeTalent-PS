@@ -115,6 +115,8 @@ jobs:
           	GATEWAY_MOCK_HOST=gateways-mock
           	GATEWAY1_PORT=3001
           	GATEWAY2_PORT=3002
+          	GATEWAY1_BASE_URL=http://gateways-mock:3001
+          	GATEWAY2_BASE_URL=http://gateways-mock:3002
           	VERSION=${{ secrets.HOMOLOG_VERSION }}
           	BUILD_SHA=${{ github.event.workflow_run.head_sha || github.sha }}
           	DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
