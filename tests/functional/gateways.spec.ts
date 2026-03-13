@@ -27,7 +27,16 @@ test.group('Gateways', (group) => {
       .json({ isActive: false })
 
     statusResponse.assertStatus(200)
-    const statusBody = await statusResponse.body()
+    const statusBody = (await statusResponse.body()) as any
+    assert.properties(statusBody.data, [
+      'id',
+      'name',
+      'priority',
+      'isActive',
+      'url',
+      'createdAt',
+      'updatedAt',
+    ])
     assert.equal(statusBody.data.isActive, false)
 
     const priorityResponse = await client
@@ -36,7 +45,16 @@ test.group('Gateways', (group) => {
       .json({ priority: 10 })
 
     priorityResponse.assertStatus(200)
-    const priorityBody = await priorityResponse.body()
+    const priorityBody = (await priorityResponse.body()) as any
+    assert.properties(priorityBody.data, [
+      'id',
+      'name',
+      'priority',
+      'isActive',
+      'url',
+      'createdAt',
+      'updatedAt',
+    ])
     assert.equal(priorityBody.data.priority, 10)
   })
 
@@ -60,6 +78,9 @@ test.group('Gateways', (group) => {
       .json({ priority: 4 })
 
     response.assertStatus(403)
+    response.assertBodyContains({
+      message: 'You do not have permission to perform this action',
+    })
   })
 
   test('gateway status update returns 404 when not found', async ({ client }) => {
@@ -76,9 +97,10 @@ test.group('Gateways', (group) => {
       .json({ isActive: true })
 
     response.assertStatus(404)
+    response.assertBodyContains({ message: 'Gateway not found' })
   })
 
-  test('gateway priority validation rejects negative values', async ({ client }) => {
+  test('gateway priority validation rejects negative values', async ({ client, assert }) => {
     const admin = await UserFactory.merge({
       email: 'admin.gateway.validation@betalent.tech',
       password: 'AdminSecret123',
@@ -98,9 +120,12 @@ test.group('Gateways', (group) => {
       .json({ priority: -1 })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
-  test('gateway status validation rejects non-boolean', async ({ client }) => {
+  test('gateway status validation rejects non-boolean', async ({ client, assert }) => {
     const admin = await UserFactory.merge({
       email: 'admin.gateway.bool@betalent.tech',
       password: 'AdminSecret123',
@@ -120,5 +145,8 @@ test.group('Gateways', (group) => {
       .json({ isActive: 'yes' })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 })

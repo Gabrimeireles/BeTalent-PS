@@ -12,7 +12,7 @@ test.group('Products', (group) => {
     response.assertStatus(401)
   })
 
-  test('admin can create product', async ({ client }) => {
+  test('admin can create product', async ({ client, assert }) => {
     const admin = await UserFactory.merge({ role: 'ADMIN' }).create()
     const token = await createBearerToken(admin)
 
@@ -25,9 +25,13 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(201)
+    const body = (await response.body()) as any
+    assert.properties(body.data, ['id', 'name', 'amount', 'createdAt', 'updatedAt'])
+    assert.equal(body.data.name, 'Premium Plan')
+    assert.equal(body.data.amount, 1999)
   })
 
-  test('admin can list products', async ({ client }) => {
+  test('admin can list products', async ({ client, assert }) => {
     const admin = await UserFactory.merge({ role: 'ADMIN' }).create()
     const token = await createBearerToken(admin)
     await ProductFactory.createMany(2)
@@ -37,9 +41,13 @@ test.group('Products', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.isArray(body.data)
+    assert.isTrue(body.data.length >= 2)
+    assert.properties(body.data[0], ['id', 'name', 'amount', 'createdAt', 'updatedAt'])
   })
 
-  test('manager can create product', async ({ client }) => {
+  test('manager can create product', async ({ client, assert }) => {
     const manager = await UserFactory.merge({ role: 'MANAGER' }).create()
     const token = await createBearerToken(manager)
 
@@ -52,9 +60,12 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(201)
+    const body = (await response.body()) as any
+    assert.equal(body.data.name, 'Enterprise Plan')
+    assert.equal(body.data.amount, 3999)
   })
 
-  test('finance can create product', async ({ client }) => {
+  test('finance can create product', async ({ client, assert }) => {
     const finance = await UserFactory.merge({ role: 'FINANCE' }).create()
     const token = await createBearerToken(finance)
 
@@ -67,6 +78,9 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(201)
+    const body = (await response.body()) as any
+    assert.equal(body.data.name, 'Finance Plan')
+    assert.equal(body.data.amount, 4999)
   })
 
   test('user cannot create product', async ({ client }) => {
@@ -82,6 +96,9 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(403)
+    response.assertBodyContains({
+      message: 'You do not have permission to perform this action',
+    })
   })
 
   test('user cannot list products', async ({ client }) => {
@@ -93,9 +110,12 @@ test.group('Products', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(403)
+    response.assertBodyContains({
+      message: 'You do not have permission to perform this action',
+    })
   })
 
-  test('validates product payload', async ({ client }) => {
+  test('validates product payload', async ({ client, assert }) => {
     const manager = await UserFactory.merge({ role: 'MANAGER' }).create()
     const token = await createBearerToken(manager)
 
@@ -108,9 +128,12 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
-  test('manager can update product', async ({ client }) => {
+  test('manager can update product', async ({ client, assert }) => {
     const manager = await UserFactory.merge({ role: 'MANAGER' }).create()
     const token = await createBearerToken(manager)
     const product = await ProductFactory.create()
@@ -124,6 +147,9 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.equal(body.data.name, 'Updated Product')
+    assert.equal(body.data.amount, 2999)
   })
 
   test('manager can delete product', async ({ client }) => {
@@ -136,6 +162,7 @@ test.group('Products', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
+    response.assertBodyContains({ message: 'Product deleted successfully' })
   })
 
   test('manager receives 404 when product is not found', async ({ client }) => {
@@ -151,5 +178,6 @@ test.group('Products', (group) => {
       })
 
     response.assertStatus(404)
+    response.assertBodyContains({ message: 'Product not found' })
   })
 })

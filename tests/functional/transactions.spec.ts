@@ -25,7 +25,7 @@ test.group('Transactions', (group) => {
     response.assertStatus(401)
   })
 
-  test('validates payload when email is invalid', async ({ client }) => {
+  test('validates payload when email is invalid', async ({ client, assert }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     const product = await ProductFactory.create()
@@ -42,6 +42,9 @@ test.group('Transactions', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
   test('creates a transaction from payment payload', async ({ client, assert }) => {
@@ -76,12 +79,29 @@ test.group('Transactions', (group) => {
     assert.equal(createdTransaction?.cardLastNumbers, '6063')
 
     const body = (await response.body()) as {
-      data: { items: Array<unknown> }
+      data: any
     }
+    assert.properties(body.data, [
+      'id',
+      'externalId',
+      'status',
+      'amount',
+      'cardLastNumbers',
+      'createdAt',
+      'updatedAt',
+      'client',
+      'gateway',
+      'items',
+    ])
+    assert.equal(body.data.amount, 2500)
+    assert.equal(body.data.status, 'completed')
+    assert.properties(body.data.client, ['id', 'name', 'email'])
+    assert.properties(body.data.gateway, ['id', 'name', 'priority', 'isActive'])
     assert.equal(body.data.items.length, 2)
+    assert.properties(body.data.items[0], ['productId', 'name', 'amount', 'quantity', 'subtotal'])
   })
 
-  test('validates cvv with 3 numeric chars', async ({ client }) => {
+  test('validates cvv with 3 numeric chars', async ({ client, assert }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
@@ -99,9 +119,12 @@ test.group('Transactions', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
-  test('authenticated user can list transactions', async ({ client }) => {
+  test('authenticated user can list transactions', async ({ client, assert }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     await TransactionFactory.createMany(2)
@@ -111,6 +134,21 @@ test.group('Transactions', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.isArray(body.data)
+    assert.isTrue(body.data.length >= 2)
+    assert.properties(body.data[0], [
+      'id',
+      'externalId',
+      'status',
+      'amount',
+      'cardLastNumbers',
+      'createdAt',
+      'updatedAt',
+      'client',
+      'gateway',
+      'items',
+    ])
   })
 
   test('authenticated user can get transaction details', async ({ client, assert }) => {
@@ -123,8 +161,20 @@ test.group('Transactions', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
-    const body = await response.body()
+    const body = (await response.body()) as any
     assert.equal(body.data.id, transaction.id)
+    assert.properties(body.data, [
+      'id',
+      'externalId',
+      'status',
+      'amount',
+      'cardLastNumbers',
+      'createdAt',
+      'updatedAt',
+      'client',
+      'gateway',
+      'items',
+    ])
   })
 
   test('finance can refund a completed transaction', async ({ client, assert }) => {
@@ -137,6 +187,9 @@ test.group('Transactions', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.equal(body.message, 'Transaction refunded successfully')
+    assert.equal(body.data.status, 'failed')
     await transaction.refresh()
     assert.equal(transaction.status, 'failed')
   })
@@ -151,5 +204,8 @@ test.group('Transactions', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(403)
+    response.assertBodyContains({
+      message: 'You do not have permission to perform this action',
+    })
   })
 })

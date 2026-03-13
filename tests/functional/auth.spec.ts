@@ -21,6 +21,7 @@ test.group('Auth', (group) => {
 
     response.assertStatus(200)
     const body = await response.body()
+    assert.properties(body.user, ['id', 'email', 'role', 'createdAt', 'updatedAt', 'initials'])
     assert.exists(body.token)
     assert.equal(body.tokenType, 'Bearer')
     assert.equal(body.user.email, user.email)
@@ -40,9 +41,15 @@ test.group('Auth', (group) => {
     })
 
     response.assertStatus(400)
+    const body = (await response.body()) as any
+    if (body?.errors?.[0]?.message) {
+      response.assertBodyContains({
+        errors: [{ message: body.errors[0].message }],
+      })
+    }
   })
 
-  test('authenticated user can access profile', async ({ client }) => {
+  test('authenticated user can access profile', async ({ client, assert }) => {
     const user = await UserFactory.merge({
       email: 'profile.user@betalent.tech',
       password: 'UserSecret123',
@@ -55,6 +62,10 @@ test.group('Auth', (group) => {
       .header('Authorization', `Bearer ${userToken}`)
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.properties(body.data, ['id', 'email', 'role', 'createdAt', 'updatedAt', 'initials'])
+    assert.equal(body.data.email, user.email)
+    assert.equal(body.data.role, user.role)
   })
 
   test('logout revokes current token', async ({ client }) => {
@@ -69,6 +80,7 @@ test.group('Auth', (group) => {
       .post('/logout')
       .header('Authorization', `Bearer ${userToken}`)
     logoutResponse.assertStatus(200)
+    logoutResponse.assertBodyContains({ message: 'Logged out successfully' })
 
     const profileResponse = await client
       .get('/account/profile')

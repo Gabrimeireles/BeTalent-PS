@@ -16,7 +16,7 @@ test.group('Clients', (group) => {
     response.assertStatus(401)
   })
 
-  test('authenticated user can list clients', async ({ client }) => {
+  test('authenticated user can list clients', async ({ client, assert }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     await ClientFactory.createMany(2)
@@ -26,6 +26,10 @@ test.group('Clients', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
+    const body = (await response.body()) as any
+    assert.isArray(body.data)
+    assert.equal(body.data.length, 2)
+    assert.properties(body.data[0], ['id', 'name', 'email', 'createdAt', 'updatedAt'])
   })
 
   test('authenticated user can view a client with purchases', async ({ client, assert }) => {
@@ -55,8 +59,23 @@ test.group('Clients', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
-    const body = await response.body()
+    const body = (await response.body()) as any
     assert.equal(body.data.id, clientRecord.id)
+    assert.properties(body.data, ['id', 'name', 'email', 'createdAt', 'updatedAt', 'purchases'])
+    assert.isArray(body.data.purchases)
+    assert.equal(body.data.purchases.length, 1)
+    assert.properties(body.data.purchases[0], [
+      'id',
+      'externalId',
+      'gatewayId',
+      'status',
+      'amount',
+      'cardLastNumbers',
+      'createdAt',
+      'updatedAt',
+      'items',
+    ])
+    assert.equal(body.data.purchases[0].items.length, 1)
   })
 
   test('authenticated user receives 404 when client is not found', async ({ client }) => {
@@ -68,5 +87,6 @@ test.group('Clients', (group) => {
       .header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(404)
+    response.assertBodyContains({ message: 'Client not found' })
   })
 })

@@ -32,6 +32,10 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(201)
+    const body = (await response.body()) as any
+    assert.properties(body.data, ['id', 'email', 'role', 'createdAt', 'updatedAt', 'initials'])
+    assert.equal(body.data.email, 'new.user@betalent.tech')
+    assert.equal(body.data.role, 'USER')
     const created = await User.findBy('email', 'new.user@betalent.tech')
     assert.exists(created)
     assert.equal(created?.role, 'USER')
@@ -56,9 +60,12 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(403)
+    response.assertBodyContains({
+      message: 'You do not have permission to perform this action',
+    })
   })
 
-  test('register validation fails with invalid role', async ({ client }) => {
+  test('register validation fails with invalid role', async ({ client, assert }) => {
     const manager = await UserFactory.merge({
       email: 'manager.validation@betalent.tech',
       password: 'ManagerSecret123',
@@ -77,9 +84,12 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
-  test('register validation fails with password mismatch', async ({ client }) => {
+  test('register validation fails with password mismatch', async ({ client, assert }) => {
     const manager = await UserFactory.merge({
       email: 'manager.confirm@betalent.tech',
       password: 'ManagerSecret123',
@@ -98,9 +108,12 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
-  test('register fails when email already exists', async ({ client }) => {
+  test('register fails when email already exists', async ({ client, assert }) => {
     const manager = await UserFactory.merge({
       email: 'manager.unique@betalent.tech',
       password: 'ManagerSecret123',
@@ -124,6 +137,9 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.isArray(body.errors)
+    assert.isTrue(body.errors.length > 0)
   })
 
   test('manager receives 404 when user is not found', async ({ client }) => {
@@ -139,6 +155,7 @@ test.group('Users', (group) => {
       .header('Authorization', `Bearer ${managerToken}`)
 
     response.assertStatus(404)
+    response.assertBodyContains({ message: 'User not found' })
   })
 
   test('manager receives 409 when updating user with duplicated email', async ({ client }) => {
@@ -167,6 +184,7 @@ test.group('Users', (group) => {
       })
 
     response.assertStatus(409)
+    response.assertBodyContains({ message: 'Email already in use' })
   })
 
   test('manager can delete user', async ({ client }) => {
@@ -187,5 +205,6 @@ test.group('Users', (group) => {
       .header('Authorization', `Bearer ${managerToken}`)
 
     response.assertStatus(200)
+    response.assertBodyContains({ message: 'User deleted successfully' })
   })
 })
