@@ -1,0 +1,69 @@
+name: be-talent-ps
+
+networks:
+  be_talent_net:
+    name: be_talent_net
+    driver: bridge
+
+volumes:
+  mysql_data:
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: be-talent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-be_talent_db}
+    ports:
+      - '127.0.0.1:3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - be_talent_net
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-p${MYSQL_ROOT_PASSWORD:-root}']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  gateways-mock:
+    image: matheusprotzen/gateways-mock
+    container_name: be-talent-gateways-mock
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:3001:3001'
+      - '127.0.0.1:3002:3002'
+    networks:
+      - be_talent_net
+
+  app:
+    image: ${APP_IMAGE}:${APP_TAG}
+    container_name: be-talent-app
+    restart: unless-stopped
+    env_file:
+      - .env.backend
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3333
+      NODE_ENV: production
+    ports:
+      - '127.0.0.1:3333:3333'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      gateways-mock:
+        condition: service_started
+    networks:
+      - be_talent_net
+    command: >
+      sh -c "node ace migration:run --force &&
+             node ace db:seed &&
+             node bin/server.js"
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3333/ >/dev/null 2>&1 || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

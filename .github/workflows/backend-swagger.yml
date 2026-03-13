@@ -1,0 +1,62 @@
+﻿name: Backend - Update Swagger Docs
+
+on:
+  workflow_run:
+    workflows: ["Backend - Build & Push"]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to update docs'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  CI: "true"
+  JWT_SECRET: "idasecret"
+  JWT_EXPIRES_IN: "100"
+
+jobs:
+  generate-swagger:
+    name: Generate & Commit Swagger JSON
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'master')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.branch || github.event.workflow_run.head_branch || github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Swagger JSON
+        run: npm run generate:swagger
+
+      - name: Commit and push swagger.json
+        env:
+          BRANCH_NAME: ${{ inputs.branch || github.event.workflow_run.head_branch || github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add swagger/swagger.json
+
+          git diff --cached --quiet || git commit -m "[DOCS] Atualização automática do Swagger JSON [skip ci]"
+          git push origin HEAD:$BRANCH_NAME
