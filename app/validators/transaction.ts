@@ -1,7 +1,6 @@
 import vine from '@vinejs/vine'
 
 export const createTransactionValidator = vine.create({
-  amount: vine.number().withoutDecimals().min(1),
   name: vine.string().trim().minLength(1).maxLength(120),
   email: vine.string().trim().email().maxLength(254),
   cardNumber: vine
@@ -14,4 +13,12 @@ export const createTransactionValidator = vine.create({
     .trim()
     .fixedLength(3)
     .regex(/^\d{3}$/),
+  products: vine
+    .array(
+      vine.object({
+        productId: vine.number().withoutDecimals().positive(),
+        quantity: vine.number().withoutDecimals().min(1),
+      })
+    )
+    .minLength(1),
 })

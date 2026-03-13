@@ -34,6 +34,22 @@ export default class TransactionsController {
   async store({ request, response }: HttpContext) {
     const payload = await request.validateUsing(createTransactionValidator)
 
+    const productIds = [...new Set(payload.products.map((item) => item.productId))]
+    const products = await Product.query().whereIn('id', productIds)
+    const productsMap = new Map(products.map((product) => [product.id, product]))
+
+    const missingProductIds = productIds.filter((productId) => !productsMap.has(productId))
+    if (missingProductIds.length > 0) {
+      return response.unprocessableEntity({
+        message: `Products not found: ${missingProductIds.join(', ')}`,
+      })
+    }
+
+    const amount = payload.products.reduce((total, item) => {
+      const product = productsMap.get(item.productId)!
+      return total + product.amount * item.quantity
+    }, 0)
+
     const client = await this.clientService.ensure({
       name: payload.name,
       email: payload.email,
@@ -41,7 +57,13 @@ export default class TransactionsController {
 
     let chargeResult: Awaited<ReturnType<GatewayService['charge']>>
     try {
-      chargeResult = await this.gatewayService.charge(payload)
+      chargeResult = await this.gatewayService.charge({
+        amount,
+        name: payload.name,
+        email: payload.email,
+        cardNumber: payload.cardNumber,
+        cvv: payload.cvv,
+      })
     } catch (error) {
       if (error instanceof GatewayServiceError) {
         return response.status(error.statusCode).json({ message: error.message })
@@ -55,9 +77,17 @@ export default class TransactionsController {
       gatewayId: chargeResult.gateway.id,
       externalId: chargeResult.externalId,
       status: chargeResult.status,
-      amount: payload.amount,
+      amount,
       cardLastNumbers: payload.cardNumber.slice(-4),
     })
+
+    await TransactionProduct.createMany(
+      payload.products.map((item) => ({
+        transactionId: transaction.id,
+        productId: item.productId,
+        quantity: item.quantity,
+      }))
+    )
 
     const [serialized] = await this.serializeTransactions([transaction])
     return response.created({ data: serialized })

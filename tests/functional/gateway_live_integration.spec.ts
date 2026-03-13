@@ -4,18 +4,23 @@ import Gateway from '#models/gateway'
 import { UserFactory } from '#database/factories/user_factory'
 import { createBearerToken } from './helpers.js'
 import Transaction from '#models/transaction'
+import Product from '#models/product'
 
 const runLive = process.env.GATEWAY_LIVE_TESTS === 'true'
 
 async function assertGatewayMocksRunning() {
+  const gatewayMockHost = process.env.GATEWAY_MOCK_HOST?.trim() || 'localhost'
+  const gateway1Port = process.env.GATEWAY1_PORT?.trim() || '3001'
+  const gateway2Port = process.env.GATEWAY2_PORT?.trim() || '3002'
+
   try {
     await Promise.all([
-      fetch('http://localhost:3001/login', { method: 'OPTIONS' }),
-      fetch('http://localhost:3002/transacoes', { method: 'OPTIONS' }),
+      fetch(`http://${gatewayMockHost}:${gateway1Port}/login`, { method: 'OPTIONS' }),
+      fetch(`http://${gatewayMockHost}:${gateway2Port}/transacoes`, { method: 'OPTIONS' }),
     ])
   } catch {
     throw new Error(
-      'Gateway mocks are not reachable. Start them with: docker run -p 3001:3001 -p 3002:3002 matheusprotzen/gateways-mock'
+      'Gateway mocks are not reachable. Start them with: docker run -p 3001:3001 -p 3002:3002 matheusprotzen/gateways-mock and configure GATEWAY_MOCK_HOST'
     )
   }
 }
@@ -26,28 +31,42 @@ test.group('Gateway Live Integration', (group) => {
   test('creates transaction against real gateway mocks', async ({ client, assert }) => {
     if (!runLive) return
     await assertGatewayMocksRunning()
+    const gatewayMockHost = process.env.GATEWAY_MOCK_HOST?.trim() || 'localhost'
+    const gateway1Port = process.env.GATEWAY1_PORT?.trim() || '3001'
+    const gateway2Port = process.env.GATEWAY2_PORT?.trim() || '3002'
 
     await Gateway.updateOrCreate(
       { name: 'Gateway 1' },
-      { name: 'Gateway 1', priority: 1, isActive: true, url: 'http://localhost:3001' }
+      {
+        name: 'Gateway 1',
+        priority: 1,
+        isActive: true,
+        url: `http://${gatewayMockHost}:${gateway1Port}`,
+      }
     )
     await Gateway.updateOrCreate(
       { name: 'Gateway 2' },
-      { name: 'Gateway 2', priority: 2, isActive: true, url: 'http://localhost:3002' }
+      {
+        name: 'Gateway 2',
+        priority: 2,
+        isActive: true,
+        url: `http://${gatewayMockHost}:${gateway2Port}`,
+      }
     )
 
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
+    const product = await Product.create({ name: 'Live Product', amount: 1000 })
 
     const response = await client
       .post('/transactions')
       .header('Authorization', `Bearer ${token}`)
       .json({
-        amount: 1000,
         name: 'live tester',
         email: 'live.tester@email.com',
         cardNumber: '5569000000006063',
         cvv: '010',
+        products: [{ productId: product.id, quantity: 1 }],
       })
 
     response.assertStatus(201)
@@ -61,28 +80,42 @@ test.group('Gateway Live Integration', (group) => {
   test('refunds transaction against real gateway mocks', async ({ client, assert }) => {
     if (!runLive) return
     await assertGatewayMocksRunning()
+    const gatewayMockHost = process.env.GATEWAY_MOCK_HOST?.trim() || 'localhost'
+    const gateway1Port = process.env.GATEWAY1_PORT?.trim() || '3001'
+    const gateway2Port = process.env.GATEWAY2_PORT?.trim() || '3002'
 
     await Gateway.updateOrCreate(
       { name: 'Gateway 1' },
-      { name: 'Gateway 1', priority: 1, isActive: true, url: 'http://localhost:3001' }
+      {
+        name: 'Gateway 1',
+        priority: 1,
+        isActive: true,
+        url: `http://${gatewayMockHost}:${gateway1Port}`,
+      }
     )
     await Gateway.updateOrCreate(
       { name: 'Gateway 2' },
-      { name: 'Gateway 2', priority: 2, isActive: true, url: 'http://localhost:3002' }
+      {
+        name: 'Gateway 2',
+        priority: 2,
+        isActive: true,
+        url: `http://${gatewayMockHost}:${gateway2Port}`,
+      }
     )
 
     const finance = await UserFactory.merge({ role: 'FINANCE' }).create()
     const token = await createBearerToken(finance)
+    const product = await Product.create({ name: 'Refund Product', amount: 1000 })
 
     const createResponse = await client
       .post('/transactions')
       .header('Authorization', `Bearer ${token}`)
       .json({
-        amount: 1000,
         name: 'refund tester',
         email: 'refund.tester@email.com',
         cardNumber: '5569000000006063',
         cvv: '010',
+        products: [{ productId: product.id, quantity: 1 }],
       })
 
     createResponse.assertStatus(201)

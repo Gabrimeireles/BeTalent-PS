@@ -3,6 +3,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import { UserFactory } from '#database/factories/user_factory'
 import { GatewayFactory } from '#database/factories/gateway_factory'
 import { TransactionFactory } from '#database/factories/transaction_factory'
+import { ProductFactory } from '#database/factories/product_factory'
 import { createBearerToken } from './helpers.js'
 import Transaction from '#models/transaction'
 import Client from '#models/client'
@@ -11,12 +12,14 @@ test.group('Transactions', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('blocks transaction creation without bearer token', async ({ client }) => {
+    const product = await ProductFactory.create()
+
     const response = await client.post('/transactions').json({
-      amount: 1000,
       name: 'tester',
       email: 'tester@email.com',
       cardNumber: '5569000000006063',
       cvv: '010',
+      products: [{ productId: product.id, quantity: 1 }],
     })
 
     response.assertStatus(401)
@@ -25,16 +28,17 @@ test.group('Transactions', (group) => {
   test('validates payload when email is invalid', async ({ client }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
+    const product = await ProductFactory.create()
 
     const response = await client
       .post('/transactions')
       .header('Authorization', `Bearer ${token}`)
       .json({
-        amount: 1000,
         name: 'tester',
         email: 'invalid-email',
         cardNumber: '5569000000006063',
         cvv: '010',
+        products: [{ productId: product.id, quantity: 1 }],
       })
 
     response.assertStatus(422)
@@ -44,16 +48,21 @@ test.group('Transactions', (group) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
+    const productA = await ProductFactory.merge({ amount: 1000 }).create()
+    const productB = await ProductFactory.merge({ amount: 500 }).create()
 
     const response = await client
       .post('/transactions')
       .header('Authorization', `Bearer ${token}`)
       .json({
-        amount: 1000,
         name: 'tester',
         email: 'tester@email.com',
         cardNumber: '5569000000006063',
         cvv: '010',
+        products: [
+          { productId: productA.id, quantity: 2 },
+          { productId: productB.id, quantity: 1 },
+        ],
       })
 
     response.assertStatus(201)
@@ -63,24 +72,30 @@ test.group('Transactions', (group) => {
 
     const createdTransaction = await Transaction.query().orderBy('id', 'desc').first()
     assert.exists(createdTransaction)
-    assert.equal(createdTransaction?.amount, 1000)
+    assert.equal(createdTransaction?.amount, 2500)
     assert.equal(createdTransaction?.cardLastNumbers, '6063')
+
+    const body = (await response.body()) as {
+      data: { items: Array<unknown> }
+    }
+    assert.equal(body.data.items.length, 2)
   })
 
   test('validates cvv with 3 numeric chars', async ({ client }) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
+    const product = await ProductFactory.create()
 
     const response = await client
       .post('/transactions')
       .header('Authorization', `Bearer ${token}`)
       .json({
-        amount: 1000,
         name: 'tester',
         email: 'tester@email.com',
         cardNumber: '5569000000006063',
         cvv: '10',
+        products: [{ productId: product.id, quantity: 1 }],
       })
 
     response.assertStatus(422)

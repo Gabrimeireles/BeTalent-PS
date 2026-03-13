@@ -32,18 +32,21 @@ test.group('GatewayService', (group) => {
   })
 
   test('charges using highest priority active gateway (gateway 1)', async ({ assert }) => {
+    const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
+    const gateway2BaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
+
     const gateway1 = await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: -100,
       isActive: true,
-      url: 'http://localhost:3001',
+      url: gateway1BaseUrl,
     })
 
     await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: -99,
       isActive: true,
-      url: 'http://localhost:3002',
+      url: gateway2BaseUrl,
     })
 
     const calls: Array<{ url: string; init?: RequestInit }> = []
@@ -76,23 +79,26 @@ test.group('GatewayService', (group) => {
     assert.equal(result.gateway.id, gateway1.id)
     assert.equal(result.externalId, 'ext-g1-001')
     assert.equal(calls.length, 2)
-    assert.equal(calls[0]?.url, 'http://localhost:3001/login')
-    assert.equal(calls[1]?.url, 'http://localhost:3001/transactions')
+    assert.equal(calls[0]?.url, `${gateway1BaseUrl}/login`)
+    assert.equal(calls[1]?.url, `${gateway1BaseUrl}/transactions`)
   })
 
   test('falls back to next gateway on technical failure', async ({ assert }) => {
+    const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
+    const gateway2BaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
+
     await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: -100,
       isActive: true,
-      url: 'http://localhost:3001',
+      url: gateway1BaseUrl,
     })
 
     const gateway2 = await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: -99,
       isActive: true,
-      url: 'http://localhost:3002',
+      url: gateway2BaseUrl,
     })
 
     const calls: string[] = []
@@ -129,18 +135,20 @@ test.group('GatewayService', (group) => {
     assert.equal(result.gateway.id, gateway2.id)
     assert.equal(result.externalId, 'ext-g2-001')
     assert.deepEqual(calls, [
-      'http://localhost:3001/login',
-      'http://localhost:3001/transactions',
-      'http://localhost:3002/transacoes',
+      `${gateway1BaseUrl}/login`,
+      `${gateway1BaseUrl}/transactions`,
+      `${gateway2BaseUrl}/transacoes`,
     ])
   })
 
   test('refunds gateway 1 transaction on charge_back endpoint', async ({ assert }) => {
+    const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
+
     const gateway1 = await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: -100,
       isActive: true,
-      url: 'http://localhost:3001',
+      url: gateway1BaseUrl,
     })
 
     const client = await Client.create({
@@ -179,17 +187,19 @@ test.group('GatewayService', (group) => {
     await service.refund(transaction)
 
     assert.deepEqual(calls, [
-      'http://localhost:3001/login',
-      'http://localhost:3001/transactions/g1-ext-123/charge_back',
+      `${gateway1BaseUrl}/login`,
+      `${gateway1BaseUrl}/transactions/g1-ext-123/charge_back`,
     ])
   })
 
   test('refunds gateway 2 transaction on reembolso endpoint', async ({ assert }) => {
+    const gateway2BaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
+
     const gateway2 = await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: -100,
       isActive: true,
-      url: 'http://localhost:3002',
+      url: gateway2BaseUrl,
     })
 
     const client = await Client.create({
@@ -225,7 +235,7 @@ test.group('GatewayService', (group) => {
 
     await service.refund(transaction)
 
-    assert.deepEqual(calls, ['http://localhost:3002/transacoes/reembolso'])
+    assert.deepEqual(calls, [`${gateway2BaseUrl}/transacoes/reembolso`])
     assert.deepEqual(requestBody, { id: 'g2-ext-123' })
   })
 })

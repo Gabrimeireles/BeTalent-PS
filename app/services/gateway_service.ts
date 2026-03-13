@@ -27,14 +27,21 @@ export class GatewayServiceError extends Error {
 export default class GatewayService {
   private gateway1Token: string | null = null
 
+  private isLiveGatewayTestEnabled() {
+    return (
+      process.env.NODE_ENV === 'test' &&
+      process.env.GATEWAY_LIVE_TESTS === 'true' &&
+      Boolean(process.env.GATEWAY_MOCK_HOST?.trim())
+    )
+  }
+
   async charge(payload: CreateChargePayload): Promise<ChargeResult> {
     const gateways = await this.getActiveGatewaysByPriority()
     if (!gateways.length) {
       throw new GatewayServiceError('No active gateway available', 400)
     }
 
-    const isTestEnvironment =
-      process.env.NODE_ENV === 'test' && process.env.GATEWAY_LIVE_TESTS !== 'true'
+    const isTestEnvironment = process.env.NODE_ENV === 'test' && !this.isLiveGatewayTestEnabled()
 
     let fallbackError: Error | null = null
     for (const gateway of gateways) {
@@ -75,7 +82,7 @@ export default class GatewayService {
       throw new GatewayServiceError('Gateway not found for transaction', 404)
     }
 
-    if (process.env.NODE_ENV === 'test' && process.env.GATEWAY_LIVE_TESTS !== 'true') {
+    if (process.env.NODE_ENV === 'test' && !this.isLiveGatewayTestEnabled()) {
       return
     }
 

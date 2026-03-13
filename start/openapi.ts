@@ -74,13 +74,24 @@ export const openApiSpec = {
       },
       TransactionBody: {
         type: 'object',
-        required: ['amount', 'name', 'email', 'cardNumber', 'cvv'],
+        required: ['name', 'email', 'cardNumber', 'cvv', 'products'],
         properties: {
-          amount: { type: 'integer', minimum: 1 },
           name: { type: 'string', minLength: 1, maxLength: 120 },
           email: { type: 'string', format: 'email' },
           cardNumber: { type: 'string', minLength: 16, maxLength: 16 },
           cvv: { type: 'string', minLength: 3, maxLength: 3 },
+          products: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              required: ['productId', 'quantity'],
+              properties: {
+                productId: { type: 'integer', minimum: 1 },
+                quantity: { type: 'integer', minimum: 1 },
+              },
+            },
+          },
         },
       },
       ErrorMessage: {
