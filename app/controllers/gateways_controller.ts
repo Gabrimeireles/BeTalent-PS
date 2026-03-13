@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Gateway from '#models/gateway'
 import { updateGatewayPriorityValidator, updateGatewayStatusValidator } from '#validators/gateway'
+import GatewayTransformer from '#transformers/gateway_transformer'
 
 export default class GatewaysController {
   async updateStatus({ params, request, response }: HttpContext) {
@@ -15,13 +16,7 @@ export default class GatewaysController {
     await gateway.save()
 
     return response.ok({
-      data: {
-        id: gateway.id,
-        name: gateway.name,
-        priority: gateway.priority,
-        isActive: gateway.isActive,
-        updatedAt: gateway.updatedAt,
-      },
+      data: GatewayTransformer.toResponse(gateway),
     })
   }
 
@@ -37,13 +32,7 @@ export default class GatewaysController {
     await gateway.save()
 
     return response.ok({
-      data: {
-        id: gateway.id,
-        name: gateway.name,
-        priority: gateway.priority,
-        isActive: gateway.isActive,
-        updatedAt: gateway.updatedAt,
-      },
+      data: GatewayTransformer.toResponse(gateway),
     })
   }
 }

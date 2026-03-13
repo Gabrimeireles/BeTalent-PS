@@ -7,6 +7,7 @@ import Client from '#models/client'
 import { createTransactionValidator } from '#validators/transaction'
 import ClientService from '#services/client_service'
 import GatewayService, { GatewayServiceError } from '#services/gateway_service'
+import TransactionTransformer from '#transformers/transaction_transformer'
 
 export default class TransactionsController {
   private clientService = new ClientService()
@@ -157,38 +158,18 @@ export default class TransactionsController {
             name: product?.name ?? null,
             amount,
             quantity: item.quantity,
-            subtotal: amount * item.quantity,
           }
         })
 
       const client = clientMap.get(transaction.clientId)
       const gateway = gatewayMap.get(transaction.gatewayId)
 
-      return {
-        id: transaction.id,
-        externalId: transaction.externalId,
-        status: transaction.status,
-        amount: transaction.amount,
-        cardLastNumbers: transaction.cardLastNumbers,
-        createdAt: transaction.createdAt,
-        updatedAt: transaction.updatedAt,
-        client: client
-          ? {
-              id: client.id,
-              name: client.name,
-              email: client.email,
-            }
-          : null,
-        gateway: gateway
-          ? {
-              id: gateway.id,
-              name: gateway.name,
-              priority: gateway.priority,
-              isActive: gateway.isActive,
-            }
-          : null,
+      return TransactionTransformer.toResponse({
+        transaction,
+        client,
+        gateway,
         items,
-      }
+      })
     })
   }
 }

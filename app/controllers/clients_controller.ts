@@ -3,19 +3,15 @@ import Product from '#models/product'
 import Transaction from '#models/transaction'
 import TransactionProduct from '#models/transaction_product'
 import type { HttpContext } from '@adonisjs/core/http'
+import ClientTransformer from '#transformers/client_transformer'
+import TransactionTransformer from '#transformers/transaction_transformer'
 
 export default class ClientsController {
   async index({ response }: HttpContext) {
     const clients = await Client.query().orderBy('id', 'asc')
 
     return response.ok({
-      data: clients.map((client) => ({
-        id: client.id,
-        name: client.name,
-        email: client.email,
-        createdAt: client.createdAt,
-        updatedAt: client.updatedAt,
-      })),
+      data: ClientTransformer.collection(clients),
     })
   }
 
@@ -50,30 +46,18 @@ export default class ClientsController {
             name: product?.name ?? null,
             amount,
             quantity: item.quantity,
-            subtotal: amount * item.quantity,
           }
         })
 
-      return {
-        id: transaction.id,
-        externalId: transaction.externalId,
-        gatewayId: transaction.gatewayId,
-        status: transaction.status,
-        amount: transaction.amount,
-        cardLastNumbers: transaction.cardLastNumbers,
-        createdAt: transaction.createdAt,
-        updatedAt: transaction.updatedAt,
+      return TransactionTransformer.toClientPurchase({
+        transaction,
         items,
-      }
+      })
     })
 
     return response.ok({
       data: {
-        id: client.id,
-        name: client.name,
-        email: client.email,
-        createdAt: client.createdAt,
-        updatedAt: client.updatedAt,
+        ...ClientTransformer.toResponse(client),
         purchases,
       },
     })

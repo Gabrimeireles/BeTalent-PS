@@ -4,17 +4,15 @@ import { registerUserValidator, updateUserValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class UsersController {
-  async index({ serialize, response }: HttpContext) {
+  async index({ response }: HttpContext) {
     const users = await User.query().orderBy('id', 'asc')
 
-    return response.ok(
-      serialize({
-        data: users.map((user) => UserTransformer.transform(user)),
-      })
-    )
+    return response.ok({
+      data: UserTransformer.collection(users),
+    })
   }
 
-  async store({ request, serialize, response }: HttpContext) {
+  async store({ request, response }: HttpContext) {
     const payload = await request.validateUsing(registerUserValidator)
 
     const user = await User.create({
@@ -23,28 +21,24 @@ export default class UsersController {
       role: payload.role,
     })
 
-    return response.created(
-      serialize({
-        data: UserTransformer.transform(user),
-      })
-    )
+    return response.created({
+      data: UserTransformer.toResponse(user),
+    })
   }
 
-  async show({ params, serialize, response }: HttpContext) {
+  async show({ params, response }: HttpContext) {
     const user = await User.find(params.id)
 
     if (!user) {
       return response.notFound({ message: 'User not found' })
     }
 
-    return response.ok(
-      serialize({
-        data: UserTransformer.transform(user),
-      })
-    )
+    return response.ok({
+      data: UserTransformer.toResponse(user),
+    })
   }
 
-  async update({ params, request, serialize, response }: HttpContext) {
+  async update({ params, request, response }: HttpContext) {
     const user = await User.find(params.id)
 
     if (!user) {
@@ -66,11 +60,9 @@ export default class UsersController {
     user.merge(payload)
     await user.save()
 
-    return response.ok(
-      serialize({
-        data: UserTransformer.transform(user),
-      })
-    )
+    return response.ok({
+      data: UserTransformer.toResponse(user),
+    })
   }
 
   async destroy({ params, response }: HttpContext) {
