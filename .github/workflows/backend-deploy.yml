@@ -22,7 +22,7 @@ env:
   HEALTH_URL: ${{ secrets.HEALTH_URL }}
   HEALTH_CHECK_RETRIES: 10
   HEALTH_CHECK_INTERVAL: 30
-  COMPOSE_FILE: docker-compose.server.yml
+  COMPOSE_FILE: docker-compose.yml
 
 jobs:
   deploy:
