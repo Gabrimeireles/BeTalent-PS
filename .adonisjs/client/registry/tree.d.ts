@@ -6,6 +6,11 @@ export interface ApiDefinition {
     ui: typeof routes['docs.ui']
     json: typeof routes['docs.json']
   }
+  health: {
+    health: typeof routes['health.health']
+    live: typeof routes['health.live']
+    ready: typeof routes['health.ready']
+  }
   accessToken: {
     store: typeof routes['access_token.store']
     destroy: typeof routes['access_token.destroy']

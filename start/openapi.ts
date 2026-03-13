@@ -103,6 +103,34 @@ export const openApiSpec = {
     },
   },
   paths: {
+    '/health': {
+      get: {
+        tags: ['Health'],
+        summary: 'Basic health status',
+        responses: {
+          '200': { description: 'Application is up' },
+        },
+      },
+    },
+    '/health/live': {
+      get: {
+        tags: ['Health'],
+        summary: 'Liveness check',
+        responses: {
+          '200': { description: 'Application is alive' },
+        },
+      },
+    },
+    '/health/ready': {
+      get: {
+        tags: ['Health'],
+        summary: 'Readiness check (database)',
+        responses: {
+          '200': { description: 'Application is ready' },
+          '503': { description: 'Application is not ready' },
+        },
+      },
+    },
     '/login': {
       post: {
         tags: ['Auth'],

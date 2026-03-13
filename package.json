@@ -1,6 +1,6 @@
 {
   "name": "Be-Talent-PS",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -13,6 +13,8 @@
     "build": "node ace build",
     "dev": "node ace serve --hmr",
     "generate:swagger": "node --import @poppinss/ts-exec ./scripts/generate_swagger.ts",
+    "sync:secrets": "node --import @poppinss/ts-exec ./scripts/sync_github_secrets.ts",
+    "sync:secrets:dry": "npm run sync:secrets -- --dry-run",
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",

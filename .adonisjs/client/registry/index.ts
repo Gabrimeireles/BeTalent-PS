@@ -18,6 +18,24 @@ const routes = {
     tokens: [{"old":"/docs/openapi.json","type":0,"val":"docs","end":""},{"old":"/docs/openapi.json","type":0,"val":"openapi.json","end":""}],
     types: placeholder as Registry['docs.json']['types'],
   },
+  'health.health': {
+    methods: ["GET","HEAD"],
+    pattern: '/health',
+    tokens: [{"old":"/health","type":0,"val":"health","end":""}],
+    types: placeholder as Registry['health.health']['types'],
+  },
+  'health.live': {
+    methods: ["GET","HEAD"],
+    pattern: '/health/live',
+    tokens: [{"old":"/health/live","type":0,"val":"health","end":""},{"old":"/health/live","type":0,"val":"live","end":""}],
+    types: placeholder as Registry['health.live']['types'],
+  },
+  'health.ready': {
+    methods: ["GET","HEAD"],
+    pattern: '/health/ready',
+    tokens: [{"old":"/health/ready","type":0,"val":"health","end":""},{"old":"/health/ready","type":0,"val":"ready","end":""}],
+    types: placeholder as Registry['health.ready']['types'],
+  },
   'access_token.store': {
     methods: ["POST"],
     pattern: '/login',

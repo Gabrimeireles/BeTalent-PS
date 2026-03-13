@@ -6,6 +6,9 @@ export type ScannedRoutes = {
   ALL: {
     'docs.ui': { paramsTuple?: []; params?: {} }
     'docs.json': { paramsTuple?: []; params?: {} }
+    'health.health': { paramsTuple?: []; params?: {} }
+    'health.live': { paramsTuple?: []; params?: {} }
+    'health.ready': { paramsTuple?: []; params?: {} }
     'access_token.store': { paramsTuple?: []; params?: {} }
     'access_token.destroy': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
@@ -31,6 +34,9 @@ export type ScannedRoutes = {
   GET: {
     'docs.ui': { paramsTuple?: []; params?: {} }
     'docs.json': { paramsTuple?: []; params?: {} }
+    'health.health': { paramsTuple?: []; params?: {} }
+    'health.live': { paramsTuple?: []; params?: {} }
+    'health.ready': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
     'users.index': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -44,6 +50,9 @@ export type ScannedRoutes = {
   HEAD: {
     'docs.ui': { paramsTuple?: []; params?: {} }
     'docs.json': { paramsTuple?: []; params?: {} }
+    'health.health': { paramsTuple?: []; params?: {} }
+    'health.live': { paramsTuple?: []; params?: {} }
+    'health.ready': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
     'users.index': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

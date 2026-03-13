@@ -13,6 +13,7 @@ const AccessTokenController = () => import('#controllers/access_token_controller
 const ProfileController = () => import('#controllers/profile_controller')
 const UsersController = () => import('#controllers/users_controller')
 const DocsController = () => import('#controllers/docs_controller')
+const HealthController = () => import('#controllers/health_controller')
 const GatewaysController = () => import('#controllers/gateways_controller')
 const ProductsController = () => import('#controllers/products_controller')
 const ClientsController = () => import('#controllers/clients_controller')
@@ -24,6 +25,9 @@ router.get('/', () => {
 
 router.get('/docs', [DocsController, 'ui'])
 router.get('/docs/openapi.json', [DocsController, 'json'])
+router.get('/health', [HealthController, 'health'])
+router.get('/health/live', [HealthController, 'live'])
+router.get('/health/ready', [HealthController, 'ready'])
 
 router.post('/login', [AccessTokenController, 'store'])
 

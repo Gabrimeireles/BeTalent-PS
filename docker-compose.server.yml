@@ -62,7 +62,7 @@ services:
              node ace db:seed &&
              node bin/server.js"
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3333/ >/dev/null 2>&1 || exit 1']
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3333/health/live >/dev/null 2>&1 || exit 1']
       interval: 30s
       timeout: 5s
       retries: 10
