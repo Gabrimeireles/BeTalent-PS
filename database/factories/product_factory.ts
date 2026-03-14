@@ -6,6 +6,7 @@ export const ProductFactory = factory
     return {
       name: faker.commerce.productName(),
       amount: faker.number.int({ min: 10, max: 5000 }),
+      quantity: faker.number.int({ min: 0, max: 20 }),
     }
   })
   .build()

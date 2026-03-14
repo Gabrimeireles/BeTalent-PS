@@ -21,7 +21,7 @@ export default class extends BaseSchema {
         .inTable('gateways')
         .onDelete('RESTRICT')
       table.string('external_id').notNullable().unique()
-      table.enum('status', ['pending', 'completed', 'failed']).notNullable()
+      table.enum('status', ['pending', 'completed', 'failed', 'refunded']).notNullable()
       table.integer('amount').unsigned().notNullable()
       table.string('card_last_numbers', 4).notNullable()
 

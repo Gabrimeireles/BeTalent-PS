@@ -18,6 +18,7 @@ export default class ProductsController {
     const product = await Product.create({
       name: payload.name,
       amount: payload.amount,
+      quantity: payload.quantity,
     })
 
     return response.created({

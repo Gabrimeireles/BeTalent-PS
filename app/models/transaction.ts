@@ -15,7 +15,7 @@ export default class Transaction extends BaseModel {
   declare externalId: string
 
   @column()
-  declare status: 'pending' | 'completed' | 'failed'
+  declare status: 'pending' | 'completed' | 'failed' | 'refunded'
 
   @column()
   declare amount: number

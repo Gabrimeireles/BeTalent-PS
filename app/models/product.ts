@@ -11,6 +11,9 @@ export default class Product extends BaseModel {
   @column()
   declare amount: number
 
+  @column()
+  declare quantity: number
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime | null
 

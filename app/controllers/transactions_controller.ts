@@ -4,6 +4,7 @@ import Transaction from '#models/transaction'
 import TransactionProduct from '#models/transaction_product'
 import Product from '#models/product'
 import Client from '#models/client'
+import db from '@adonisjs/lucid/services/db'
 import { createTransactionValidator } from '#validators/transaction'
 import ClientService from '#services/client_service'
 import GatewayService, { GatewayServiceError } from '#services/gateway_service'
@@ -36,35 +37,94 @@ export default class TransactionsController {
     const payload = await request.validateUsing(createTransactionValidator)
 
     const productIds = [...new Set(payload.products.map((item) => item.productId))]
-    const products = await Product.query().whereIn('id', productIds)
-    const productsMap = new Map(products.map((product) => [product.id, product]))
-
-    const missingProductIds = productIds.filter((productId) => !productsMap.has(productId))
-    if (missingProductIds.length > 0) {
-      return response.unprocessableEntity({
-        message: `Products not found: ${missingProductIds.join(', ')}`,
-      })
-    }
-
-    const amount = payload.products.reduce((total, item) => {
-      const product = productsMap.get(item.productId)!
-      return total + product.amount * item.quantity
-    }, 0)
-
-    const client = await this.clientService.ensure({
-      name: payload.name,
-      email: payload.email,
-    })
-
-    let chargeResult: Awaited<ReturnType<GatewayService['charge']>>
     try {
-      chargeResult = await this.gatewayService.charge({
-        amount,
-        name: payload.name,
-        email: payload.email,
-        cardNumber: payload.cardNumber,
-        cvv: payload.cvv,
+      const transaction = await db.transaction(async (trx) => {
+        const products = await Product.query({ client: trx })
+          .whereIn('id', productIds)
+          .forUpdate()
+        const productsMap = new Map(products.map((product) => [product.id, product]))
+
+        const missingProductIds = productIds.filter((productId) => !productsMap.has(productId))
+        if (missingProductIds.length > 0) {
+          throw new GatewayServiceError(`Products not found: ${missingProductIds.join(', ')}`, 422)
+        }
+
+        const unavailableProducts = payload.products
+          .map((item) => {
+            const product = productsMap.get(item.productId)!
+            return product.quantity < item.quantity
+              ? {
+                  productId: item.productId,
+                  requested: item.quantity,
+                  available: product.quantity,
+                }
+              : null
+          })
+          .filter((item) => item !== null)
+
+        if (unavailableProducts.length > 0) {
+          const details = unavailableProducts.map(
+            (item) =>
+              `product ${item.productId}: requested ${item.requested}, available ${item.available}`
+          )
+
+          throw new GatewayServiceError(`Insufficient stock for ${details.join('; ')}`, 422)
+        }
+
+        const amount = payload.products.reduce((total, item) => {
+          const product = productsMap.get(item.productId)!
+          return total + product.amount * item.quantity
+        }, 0)
+
+        const client = await this.clientService.ensure(
+          {
+            name: payload.name,
+            email: payload.email,
+          },
+          trx
+        )
+
+        const chargeResult = await this.gatewayService.charge({
+          amount,
+          name: payload.name,
+          email: payload.email,
+          cardNumber: payload.cardNumber,
+          cvv: payload.cvv,
+        })
+
+        for (const item of payload.products) {
+          const product = productsMap.get(item.productId)!
+          product.quantity -= item.quantity
+          product.useTransaction(trx)
+          await product.save()
+        }
+
+        const transaction = await Transaction.create(
+          {
+            clientId: client.id,
+            gatewayId: chargeResult.gateway.id,
+            externalId: chargeResult.externalId,
+            status: chargeResult.status,
+            amount,
+            cardLastNumbers: payload.cardNumber.slice(-4),
+          },
+          { client: trx }
+        )
+
+        await TransactionProduct.createMany(
+          payload.products.map((item) => ({
+            transactionId: transaction.id,
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          { client: trx }
+        )
+
+        return transaction
       })
+
+      const [serialized] = await this.serializeTransactions([transaction])
+      return response.created({ data: serialized })
     } catch (error) {
       if (error instanceof GatewayServiceError) {
         return response.status(error.statusCode).json({ message: error.message })
@@ -72,26 +132,6 @@ export default class TransactionsController {
 
       return response.badGateway({ message: 'Gateway integration failed' })
     }
-
-    const transaction = await Transaction.create({
-      clientId: client.id,
-      gatewayId: chargeResult.gateway.id,
-      externalId: chargeResult.externalId,
-      status: chargeResult.status,
-      amount,
-      cardLastNumbers: payload.cardNumber.slice(-4),
-    })
-
-    await TransactionProduct.createMany(
-      payload.products.map((item) => ({
-        transactionId: transaction.id,
-        productId: item.productId,
-        quantity: item.quantity,
-      }))
-    )
-
-    const [serialized] = await this.serializeTransactions([transaction])
-    return response.created({ data: serialized })
   }
 
   async refund({ params, response }: HttpContext) {
@@ -106,9 +146,34 @@ export default class TransactionsController {
     }
 
     try {
-      await this.gatewayService.refund(transaction)
-      transaction.status = 'failed'
-      await transaction.save()
+      await db.transaction(async (trx) => {
+        await this.gatewayService.refund(transaction)
+
+        const items = await TransactionProduct.query({ client: trx })
+          .where('transactionId', transaction.id)
+          .forUpdate()
+
+        const productIds = [...new Set(items.map((item) => item.productId))]
+        const products = productIds.length
+          ? await Product.query({ client: trx }).whereIn('id', productIds).forUpdate()
+          : []
+        const productMap = new Map(products.map((product) => [product.id, product]))
+
+        for (const item of items) {
+          const product = productMap.get(item.productId)
+          if (!product) {
+            continue
+          }
+
+          product.quantity += item.quantity
+          product.useTransaction(trx)
+          await product.save()
+        }
+
+        transaction.status = 'refunded'
+        transaction.useTransaction(trx)
+        await transaction.save()
+      })
     } catch (error) {
       if (error instanceof GatewayServiceError) {
         return response.status(error.statusCode).json({ message: error.message })

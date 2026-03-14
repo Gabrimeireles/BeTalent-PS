@@ -7,6 +7,7 @@ export default class ProductTransformer extends BaseTransformer<Product> {
       id: product.id,
       name: product.name,
       amount: product.amount,
+      quantity: product.quantity,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }

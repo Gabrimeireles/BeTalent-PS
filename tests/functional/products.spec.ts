@@ -22,13 +22,15 @@ test.group('Products', (group) => {
       .json({
         name: 'Premium Plan',
         amount: 1999,
+        quantity: 10,
       })
 
     response.assertStatus(201)
     const body = (await response.body()) as any
-    assert.properties(body.data, ['id', 'name', 'amount', 'createdAt', 'updatedAt'])
+    assert.properties(body.data, ['id', 'name', 'amount', 'quantity', 'createdAt', 'updatedAt'])
     assert.equal(body.data.name, 'Premium Plan')
     assert.equal(body.data.amount, 1999)
+    assert.equal(body.data.quantity, 10)
   })
 
   test('admin can list products', async ({ client, assert }) => {
@@ -44,7 +46,7 @@ test.group('Products', (group) => {
     const body = (await response.body()) as any
     assert.isArray(body.data)
     assert.isTrue(body.data.length >= 2)
-    assert.properties(body.data[0], ['id', 'name', 'amount', 'createdAt', 'updatedAt'])
+    assert.properties(body.data[0], ['id', 'name', 'amount', 'quantity', 'createdAt', 'updatedAt'])
   })
 
   test('manager can create product', async ({ client, assert }) => {
@@ -57,12 +59,14 @@ test.group('Products', (group) => {
       .json({
         name: 'Enterprise Plan',
         amount: 3999,
+        quantity: 8,
       })
 
     response.assertStatus(201)
     const body = (await response.body()) as any
     assert.equal(body.data.name, 'Enterprise Plan')
     assert.equal(body.data.amount, 3999)
+    assert.equal(body.data.quantity, 8)
   })
 
   test('finance can create product', async ({ client, assert }) => {
@@ -75,12 +79,14 @@ test.group('Products', (group) => {
       .json({
         name: 'Finance Plan',
         amount: 4999,
+        quantity: 6,
       })
 
     response.assertStatus(201)
     const body = (await response.body()) as any
     assert.equal(body.data.name, 'Finance Plan')
     assert.equal(body.data.amount, 4999)
+    assert.equal(body.data.quantity, 6)
   })
 
   test('user cannot create product', async ({ client }) => {
@@ -93,6 +99,7 @@ test.group('Products', (group) => {
       .json({
         name: 'Blocked Plan',
         amount: 999,
+        quantity: 1,
       })
 
     response.assertStatus(403)
@@ -125,6 +132,7 @@ test.group('Products', (group) => {
       .json({
         name: '',
         amount: -10,
+        quantity: -1,
       })
 
     response.assertStatus(422)
@@ -144,12 +152,14 @@ test.group('Products', (group) => {
       .json({
         name: 'Updated Product',
         amount: 2999,
+        quantity: 15,
       })
 
     response.assertStatus(200)
     const body = (await response.body()) as any
     assert.equal(body.data.name, 'Updated Product')
     assert.equal(body.data.amount, 2999)
+    assert.equal(body.data.quantity, 15)
   })
 
   test('manager can delete product', async ({ client }) => {
@@ -175,6 +185,7 @@ test.group('Products', (group) => {
       .json({
         name: 'Updated Product',
         amount: 2999,
+        quantity: 15,
       })
 
     response.assertStatus(404)

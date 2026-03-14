@@ -50,6 +50,7 @@ export const TransactionFactory = factory
       const [productId] = await dbClient.table('products').insert({
         name: ctx.faker.commerce.productName(),
         amount: price,
+        quantity,
         created_at: new Date(),
         updated_at: new Date(),
       })

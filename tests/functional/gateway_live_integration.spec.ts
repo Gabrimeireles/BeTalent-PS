@@ -54,7 +54,7 @@ test.group('Gateway Live Integration', (group) => {
       }
     )
 
-    const product = await Product.create({ name: 'Live Product', amount: 1000 })
+    const product = await Product.create({ name: 'Live Product', amount: 1000, quantity: 5 })
 
     const response = await client
       .post('/transactions')
@@ -102,7 +102,7 @@ test.group('Gateway Live Integration', (group) => {
 
     const finance = await UserFactory.merge({ role: 'FINANCE' }).create()
     const token = await createBearerToken(finance)
-    const product = await Product.create({ name: 'Refund Product', amount: 1000 })
+    const product = await Product.create({ name: 'Refund Product', amount: 1000, quantity: 5 })
 
     const createResponse = await client
       .post('/transactions')
@@ -127,6 +127,6 @@ test.group('Gateway Live Integration', (group) => {
     refundResponse.assertStatus(200)
 
     const transaction = await Transaction.findOrFail(transactionId)
-    assert.equal(transaction.status, 'failed')
+    assert.equal(transaction.status, 'refunded')
   })
 })

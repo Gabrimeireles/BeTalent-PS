@@ -12,7 +12,7 @@ test.group('Transactions', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('allows public transaction creation without bearer token', async ({ client }) => {
-    const product = await ProductFactory.create()
+    const product = await ProductFactory.merge({ quantity: 3 }).create()
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
 
     const response = await client.post('/transactions').json({
@@ -27,7 +27,7 @@ test.group('Transactions', (group) => {
   })
 
   test('validates payload when email is invalid', async ({ client, assert }) => {
-    const product = await ProductFactory.create()
+    const product = await ProductFactory.merge({ quantity: 3 }).create()
 
     const response = await client
       .post('/transactions')
@@ -47,8 +47,8 @@ test.group('Transactions', (group) => {
 
   test('creates a transaction from payment payload', async ({ client, assert }) => {
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
-    const productA = await ProductFactory.merge({ amount: 1000 }).create()
-    const productB = await ProductFactory.merge({ amount: 500 }).create()
+    const productA = await ProductFactory.merge({ amount: 1000, quantity: 3 }).create()
+    const productB = await ProductFactory.merge({ amount: 500, quantity: 2 }).create()
 
     const response = await client
       .post('/transactions')
@@ -72,6 +72,10 @@ test.group('Transactions', (group) => {
     assert.exists(createdTransaction)
     assert.equal(createdTransaction?.amount, 2500)
     assert.equal(createdTransaction?.cardLastNumbers, '6063')
+    await productA.refresh()
+    await productB.refresh()
+    assert.equal(productA.quantity, 1)
+    assert.equal(productB.quantity, 1)
 
     const body = (await response.body()) as {
       data: any
@@ -98,7 +102,7 @@ test.group('Transactions', (group) => {
 
   test('validates cvv with 3 numeric chars', async ({ client, assert }) => {
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
-    const product = await ProductFactory.create()
+    const product = await ProductFactory.merge({ quantity: 3 }).create()
 
     const response = await client
       .post('/transactions')
@@ -181,9 +185,34 @@ test.group('Transactions', (group) => {
     response.assertStatus(200)
     const body = (await response.body()) as any
     assert.equal(body.message, 'Transaction refunded successfully')
-    assert.equal(body.data.status, 'failed')
+    assert.equal(body.data.status, 'refunded')
     await transaction.refresh()
-    assert.equal(transaction.status, 'failed')
+    assert.equal(transaction.status, 'refunded')
+  })
+
+  test('rejects transaction when requested quantity exceeds available stock', async ({
+    client,
+    assert,
+  }) => {
+    await GatewayFactory.merge({ priority: 1, isActive: true }).create()
+    const product = await ProductFactory.merge({ amount: 1000, quantity: 1 }).create()
+
+    const response = await client.post('/transactions').json({
+      name: 'tester',
+      email: 'tester@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+      products: [{ productId: product.id, quantity: 2 }],
+    })
+
+    response.assertStatus(422)
+    const body = (await response.body()) as any
+    assert.equal(
+      body.message,
+      `Insufficient stock for product ${product.id}: requested 2, available 1`
+    )
+    await product.refresh()
+    assert.equal(product.quantity, 1)
   })
 
   test('manager cannot refund a transaction', async ({ client }) => {
