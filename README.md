@@ -58,6 +58,7 @@ Observacoes:
 - Para rodar os gateways mockados em container separado, mantenha `GATEWAY_MOCK_HOST=localhost`.
 - No `docker-compose.yml` principal, a aplicacao usa `GATEWAY_MOCK_HOST=gateways-mock`.
 - O `docker-compose.yml` principal reaproveita `DB_DATABASE`, `DB_USER` e `DB_PASSWORD` do `.env` para manter a aplicacao e o MySQL sincronizados.
+- Opcionalmente, o proprio `docker-compose.yml` pode executar a suite de testes antes de subir a API com `RUN_TESTS_ON_BOOT=true`.
 
 ## Como instalar e rodar o projeto
 
@@ -120,7 +121,13 @@ Esse fluxo:
 - sobe os mocks dos gateways;
 - executa `migration:run`;
 - executa `db:seed`;
+- executa `npm test` quando `RUN_TESTS_ON_BOOT=true`;
 - inicia a API na porta `3333`.
+
+Observacao:
+
+- Ao final da suite, o teardown dos testes executa `db:truncate` e `db:seed`, deixando o banco limpo e sem residuo dos testes.
+- Para desativar os testes no boot do Docker, defina `RUN_TESTS_ON_BOOT=false`.
 
 ## Dados iniciais
 
