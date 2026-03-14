@@ -2,9 +2,9 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Gateway from '#models/gateway'
 import { UserFactory } from '#database/factories/user_factory'
-import { createBearerToken } from './helpers.js'
 import Transaction from '#models/transaction'
 import Product from '#models/product'
+import { createBearerToken } from './helpers.js'
 
 const runLive = process.env.GATEWAY_LIVE_TESTS === 'true'
 
@@ -54,13 +54,10 @@ test.group('Gateway Live Integration', (group) => {
       }
     )
 
-    const user = await UserFactory.merge({ role: 'USER' }).create()
-    const token = await createBearerToken(user)
     const product = await Product.create({ name: 'Live Product', amount: 1000 })
 
     const response = await client
       .post('/transactions')
-      .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'live tester',
         email: 'live.tester@email.com',
@@ -109,7 +106,6 @@ test.group('Gateway Live Integration', (group) => {
 
     const createResponse = await client
       .post('/transactions')
-      .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'refund tester',
         email: 'refund.tester@email.com',

@@ -57,6 +57,7 @@ Observacoes:
 - O projeto usa MySQL como conexao padrao.
 - Para rodar os gateways mockados em container separado, mantenha `GATEWAY_MOCK_HOST=localhost`.
 - No `docker-compose.yml` principal, a aplicacao usa `GATEWAY_MOCK_HOST=gateways-mock`.
+- O `docker-compose.yml` principal reaproveita `DB_DATABASE`, `DB_USER` e `DB_PASSWORD` do `.env` para manter a aplicacao e o MySQL sincronizados.
 
 ## Como instalar e rodar o projeto
 
@@ -172,6 +173,7 @@ curl --request POST \
 | GET | `/health/live` | Liveness check com uptime e versao | Nao |
 | GET | `/health/ready` | Readiness check com validacao de banco | Nao |
 | POST | `/login` | Autentica usuario e retorna Bearer token | Nao |
+| POST | `/transactions` | Cria uma transacao e envia para o gateway | Nao |
 
 ### Autenticadas
 
@@ -258,7 +260,6 @@ Corpo esperado:
 | --- | --- | --- | --- |
 | GET | `/transactions` | Lista transacoes | Todos autenticados |
 | GET | `/transactions/:id` | Detalha uma transacao | Todos autenticados |
-| POST | `/transactions` | Cria uma transacao e envia para o gateway | Todos autenticados |
 | POST | `/transactions/:id/refund` | Estorna uma transacao concluida | `ADMIN`, `FINANCE` |
 
 Corpo esperado para criacao:

@@ -413,7 +413,6 @@ export const openApiSpec = {
       post: {
         tags: ['Transactions'],
         summary: 'Create transaction',
-        security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -432,7 +431,6 @@ export const openApiSpec = {
               },
             },
           },
-          '401': { description: 'Unauthorized' },
           '422': { description: 'Validation error' },
           '502': { description: 'Gateway integration failed' },
         },

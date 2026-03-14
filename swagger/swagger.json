@@ -846,11 +846,6 @@
           "Transactions"
         ],
         "summary": "Create transaction",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -874,9 +869,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "422": {
             "description": "Validation error"

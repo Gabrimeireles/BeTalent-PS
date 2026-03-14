@@ -4,14 +4,15 @@ services:
     container_name: be-talent-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: be_talent_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-app}
     ports:
       - '3307:3306'
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
+      test:
+        ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-p${DB_PASSWORD:-root}']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -44,9 +45,9 @@ services:
       SESSION_DRIVER: cookie
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_DATABASE: be_talent_db
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_DATABASE: ${DB_DATABASE:-app}
       GATEWAY_MOCK_HOST: gateways-mock
       GATEWAY1_PORT: 3001
       GATEWAY2_PORT: 3002

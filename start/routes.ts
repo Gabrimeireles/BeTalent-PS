@@ -30,6 +30,7 @@ router.get('/health/live', [HealthController, 'live'])
 router.get('/health/ready', [HealthController, 'ready'])
 
 router.post('/login', [AccessTokenController, 'store'])
+router.post('/transactions', [TransactionsController, 'store'])
 
 router
   .group(() => {
@@ -78,7 +79,6 @@ router
       .group(() => {
         router.get('/', [TransactionsController, 'index'])
         router.get('/:id', [TransactionsController, 'show'])
-        router.post('/', [TransactionsController, 'store'])
         router
           .post('/:id/refund', [TransactionsController, 'refund'])
           .use(middleware.role({ roles: ['ADMIN', 'FINANCE'] }))

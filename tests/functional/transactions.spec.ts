@@ -11,8 +11,9 @@ import Client from '#models/client'
 test.group('Transactions', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  test('blocks transaction creation without bearer token', async ({ client }) => {
+  test('allows public transaction creation without bearer token', async ({ client }) => {
     const product = await ProductFactory.create()
+    await GatewayFactory.merge({ priority: 1, isActive: true }).create()
 
     const response = await client.post('/transactions').json({
       name: 'tester',
@@ -22,17 +23,14 @@ test.group('Transactions', (group) => {
       products: [{ productId: product.id, quantity: 1 }],
     })
 
-    response.assertStatus(401)
+    response.assertStatus(201)
   })
 
   test('validates payload when email is invalid', async ({ client, assert }) => {
-    const user = await UserFactory.merge({ role: 'USER' }).create()
-    const token = await createBearerToken(user)
     const product = await ProductFactory.create()
 
     const response = await client
       .post('/transactions')
-      .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'tester',
         email: 'invalid-email',
@@ -48,15 +46,12 @@ test.group('Transactions', (group) => {
   })
 
   test('creates a transaction from payment payload', async ({ client, assert }) => {
-    const user = await UserFactory.merge({ role: 'USER' }).create()
-    const token = await createBearerToken(user)
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
     const productA = await ProductFactory.merge({ amount: 1000 }).create()
     const productB = await ProductFactory.merge({ amount: 500 }).create()
 
     const response = await client
       .post('/transactions')
-      .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'tester',
         email: 'tester@email.com',
@@ -102,14 +97,11 @@ test.group('Transactions', (group) => {
   })
 
   test('validates cvv with 3 numeric chars', async ({ client, assert }) => {
-    const user = await UserFactory.merge({ role: 'USER' }).create()
-    const token = await createBearerToken(user)
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
     const product = await ProductFactory.create()
 
     const response = await client
       .post('/transactions')
-      .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'tester',
         email: 'tester@email.com',
