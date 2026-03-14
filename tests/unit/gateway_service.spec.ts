@@ -31,20 +31,25 @@ test.group('GatewayService', (group) => {
     }
   })
 
+  async function deactivateExistingGateways() {
+    await Gateway.query().update({ isActive: false })
+  }
+
   test('charges using highest priority active gateway (gateway 1)', async ({ assert }) => {
+    await deactivateExistingGateways()
     const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
     const gateway2BaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
 
     const gateway1 = await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
-      priority: -100,
+      priority: 1,
       isActive: true,
       url: gateway1BaseUrl,
     })
 
     await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
-      priority: -99,
+      priority: 2,
       isActive: true,
       url: gateway2BaseUrl,
     })
@@ -84,19 +89,20 @@ test.group('GatewayService', (group) => {
   })
 
   test('falls back to next gateway on technical failure', async ({ assert }) => {
+    await deactivateExistingGateways()
     const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
     const gateway2BaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
 
     await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
-      priority: -100,
+      priority: 1,
       isActive: true,
       url: gateway1BaseUrl,
     })
 
     const gateway2 = await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
-      priority: -99,
+      priority: 2,
       isActive: true,
       url: gateway2BaseUrl,
     })
@@ -141,12 +147,59 @@ test.group('GatewayService', (group) => {
     ])
   })
 
+  test('ignores inactive gateways even when they have higher priority', async ({ assert }) => {
+    await deactivateExistingGateways()
+    const inactiveGatewayBaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
+    const activeGatewayBaseUrl = `http://g2-${crypto.randomUUID()}.local:3002`
+
+    await Gateway.create({
+      name: `Gateway Inactive ${crypto.randomUUID()}`,
+      priority: 1,
+      isActive: false,
+      url: inactiveGatewayBaseUrl,
+    })
+
+    const activeGateway = await Gateway.create({
+      name: `Gateway 2 Active ${crypto.randomUUID()}`,
+      priority: 2,
+      isActive: true,
+      url: activeGatewayBaseUrl,
+    })
+
+    const calls: string[] = []
+    const mockedFetch: FetchMock = async (input) => {
+      const url = input.toString()
+      calls.push(url)
+
+      if (url.endsWith('/transacoes')) {
+        return jsonResponse({ id: 'ext-g2-active-001' }, 201)
+      }
+
+      return jsonResponse({ message: 'Unexpected URL' }, 500)
+    }
+
+    global.fetch = mockedFetch
+    const service = new GatewayService()
+
+    const result = await service.charge({
+      amount: 1500,
+      name: 'Tester Active',
+      email: 'tester.active@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+    })
+
+    assert.equal(result.gateway.id, activeGateway.id)
+    assert.equal(result.externalId, 'ext-g2-active-001')
+    assert.deepEqual(calls, [`${activeGatewayBaseUrl}/transacoes`])
+  })
+
   test('refunds gateway 1 transaction on charge_back endpoint', async ({ assert }) => {
     const gateway1BaseUrl = `http://g1-${crypto.randomUUID()}.local:3001`
 
     const gateway1 = await Gateway.create({
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
-      priority: -100,
+      priority: 1,
       isActive: true,
       url: gateway1BaseUrl,
     })
@@ -197,7 +250,7 @@ test.group('GatewayService', (group) => {
 
     const gateway2 = await Gateway.create({
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
-      priority: -100,
+      priority: 2,
       isActive: true,
       url: gateway2BaseUrl,
     })

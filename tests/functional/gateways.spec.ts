@@ -100,7 +100,7 @@ test.group('Gateways', (group) => {
     response.assertBodyContains({ message: 'Gateway not found' })
   })
 
-  test('gateway priority validation rejects negative values', async ({ client, assert }) => {
+  test('gateway priority validation rejects zero', async ({ client, assert }) => {
     const admin = await UserFactory.merge({
       email: 'admin.gateway.validation@betalent.tech',
       password: 'AdminSecret123',
@@ -117,7 +117,7 @@ test.group('Gateways', (group) => {
     const response = await client
       .patch(`/gateways/${gateway.id}/priority`)
       .header('Authorization', `Bearer ${adminToken}`)
-      .json({ priority: -1 })
+      .json({ priority: 0 })
 
     response.assertStatus(422)
     const body = (await response.body()) as any

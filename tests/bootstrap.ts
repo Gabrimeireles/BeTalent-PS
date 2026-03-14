@@ -31,6 +31,8 @@ export const plugins: Config['plugins'] = [
   authApiClient(app),
 ]
 
+let truncateDatabase: undefined | (() => Promise<void>)
+
 /**
  * Configure lifecycle function to run before and after all the
  * tests.
@@ -39,8 +41,21 @@ export const plugins: Config['plugins'] = [
  * The teardown functions are executed after all the tests
  */
 export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
-  setup: [],
-  teardown: [],
+  setup: [
+    async () => {
+      truncateDatabase = await testUtils.db().truncate()
+      await testUtils.db().seed()
+    },
+  ],
+  teardown: [
+    async () => {
+      if (truncateDatabase) {
+        await truncateDatabase()
+      }
+
+      await testUtils.db().seed()
+    },
+  ],
 }
 
 /**

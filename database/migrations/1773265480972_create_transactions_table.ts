@@ -22,7 +22,7 @@ export default class extends BaseSchema {
         .onDelete('RESTRICT')
       table.string('external_id').notNullable().unique()
       table.enum('status', ['pending', 'completed', 'failed']).notNullable()
-      table.float('amount', 10, 2).notNullable()
+      table.integer('amount').unsigned().notNullable()
       table.string('card_last_numbers', 4).notNullable()
 
       table.timestamp('created_at')

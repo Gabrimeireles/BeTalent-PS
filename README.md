@@ -44,7 +44,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=root
-DB_DATABASE=app
+DB_DATABASE=be_talent_db
 
 GATEWAY_MOCK_HOST=localhost
 GATEWAY1_PORT=3001
@@ -82,7 +82,7 @@ node ace generate:key
 Exemplo com Docker apenas para as dependencias:
 
 ```bash
-docker run --name be-talent-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=app -p 3306:3306 -d mysql:8.4
+docker run --name be-talent-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=be_talent_db -p 3306:3306 -d mysql:8.4
 docker run --name be-talent-gateways -p 3001:3001 -p 3002:3002 -d matheusprotzen/gateways-mock
 ```
 
@@ -228,6 +228,11 @@ Exemplos de corpo:
 }
 ```
 
+Regras relevantes:
+
+- Prioridade minima permitida: `1`.
+- Gateways inativos nao entram na ordem de tentativa de cobranca.
+
 #### Produtos
 
 | Metodo | Rota | Descricao | Perfis |
@@ -282,6 +287,7 @@ Corpo esperado para criacao:
 Comportamentos relevantes:
 
 - O valor total da transacao e calculado pela API a partir dos produtos e quantidades enviados.
+- O campo `amount` e persistido em centavos, como inteiro.
 - O cliente e criado automaticamente caso ainda nao exista.
 - A API tenta cobrar nos gateways ativos em ordem de prioridade.
 - Em caso de erro de infraestrutura em um gateway, a API tenta fallback para o proximo gateway ativo.

@@ -5,5 +5,5 @@ export const updateGatewayStatusValidator = vine.create({
 })
 
 export const updateGatewayPriorityValidator = vine.create({
-  priority: vine.number().withoutDecimals().min(0),
+  priority: vine.number().withoutDecimals().min(1),
 })

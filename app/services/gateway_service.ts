@@ -109,8 +109,7 @@ export default class GatewayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Gateway-Auth-Token':
-            process.env.GATEWAY2_AUTH_TOKEN ?? 'tk_f2198cc671b5289fa856',
+          'Gateway-Auth-Token': process.env.GATEWAY2_AUTH_TOKEN ?? 'tk_f2198cc671b5289fa856',
           'Gateway-Auth-Secret':
             process.env.GATEWAY2_AUTH_SECRET ?? '3d15e8ed6131446ea7e3456728b1211f',
         },
@@ -131,6 +130,7 @@ export default class GatewayService {
   private async getActiveGatewaysByPriority() {
     return Gateway.query()
       .where('isActive', true)
+      .where('priority', '>=', 1)
       .whereNotNull('url')
       .orderBy('priority', 'asc')
       .orderBy('id', 'asc')
@@ -142,7 +142,7 @@ export default class GatewayService {
       const response = await fetch(`${this.getGatewayBaseUrl(gateway)}/transactions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${bearerToken}`,
+          'Authorization': `Bearer ${bearerToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -169,8 +169,7 @@ export default class GatewayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Gateway-Auth-Token':
-            process.env.GATEWAY2_AUTH_TOKEN ?? 'tk_f2198cc671b5289fa856',
+          'Gateway-Auth-Token': process.env.GATEWAY2_AUTH_TOKEN ?? 'tk_f2198cc671b5289fa856',
           'Gateway-Auth-Secret':
             process.env.GATEWAY2_AUTH_SECRET ?? '3d15e8ed6131446ea7e3456728b1211f',
         },

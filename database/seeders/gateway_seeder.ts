@@ -26,7 +26,7 @@ export default class extends BaseSeeder {
       { id: 2 },
       {
         name: 'Gateway 2',
-        priority: 1,
+        priority: 2,
         isActive: true,
         url: gateway2Url,
       }
