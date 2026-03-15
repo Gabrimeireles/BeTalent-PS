@@ -2,8 +2,20 @@ import { openApiSpec } from '#start/openapi'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class DocsController {
-  async json({ response }: HttpContext) {
-    return response.ok(openApiSpec)
+  async json({ request, response }: HttpContext) {
+    const forwardedProto = request.header('x-forwarded-proto')?.split(',')[0]?.trim()
+    const forwardedHost = request.header('x-forwarded-host')?.split(',')[0]?.trim()
+    const protocol = forwardedProto || request.protocol()
+    const host = forwardedHost || request.host()
+    const defaultServerUrl = openApiSpec.servers[0]?.url || 'http://localhost:3333'
+    const serverUrl = host ? `${protocol}://${host}` : defaultServerUrl
+
+    const spec = {
+      ...openApiSpec,
+      servers: [{ url: serverUrl }],
+    }
+
+    return response.ok(spec)
   }
 
   async ui({ response }: HttpContext) {
