@@ -255,9 +255,15 @@ Corpo esperado:
 ```json
 {
   "name": "Premium Plan",
-  "amount": 1999
+  "amount": 1999,
+  "quantity": 10
 }
 ```
+
+Regras relevantes:
+
+- `amount` deve ser informado em centavos.
+- `quantity` representa o estoque disponivel do produto e deve ser inteiro maior ou igual a `0`.
 
 #### Clientes
 
@@ -296,9 +302,14 @@ Comportamentos relevantes:
 - O valor total da transacao e calculado pela API a partir dos produtos e quantidades enviados.
 - O campo `amount` e persistido em centavos, como inteiro.
 - O cliente e criado automaticamente caso ainda nao exista.
+- A compra so e concluida quando existe estoque suficiente para todos os produtos solicitados.
+- Se alguma quantidade solicitada for maior que o estoque disponivel, a API retorna `422` e nao efetiva a cobranca.
+- Ao concluir a compra, o estoque dos produtos e decrementado conforme as quantidades compradas.
 - A API tenta cobrar nos gateways ativos em ordem de prioridade.
 - Em caso de erro de infraestrutura em um gateway, a API tenta fallback para o proximo gateway ativo.
 - O estorno so e permitido para transacoes com status `completed`.
+- Ao estornar uma compra, o status da transacao passa para `refunded`.
+- Ao estornar uma compra, o estoque dos produtos da transacao e devolvido.
 
 ## Swagger e documentacao da API
 
