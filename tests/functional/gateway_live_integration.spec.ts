@@ -41,6 +41,7 @@ test.group('Gateway Live Integration', (group) => {
         name: 'Gateway 1',
         priority: 1,
         isActive: true,
+        driver: 'gateway_1',
         url: `http://${gatewayMockHost}:${gateway1Port}`,
       }
     )
@@ -50,21 +51,20 @@ test.group('Gateway Live Integration', (group) => {
         name: 'Gateway 2',
         priority: 2,
         isActive: true,
+        driver: 'gateway_2',
         url: `http://${gatewayMockHost}:${gateway2Port}`,
       }
     )
 
     const product = await Product.create({ name: 'Live Product', amount: 1000, quantity: 5 })
 
-    const response = await client
-      .post('/transactions')
-      .json({
-        name: 'live tester',
-        email: 'live.tester@email.com',
-        cardNumber: '5569000000006063',
-        cvv: '010',
-        products: [{ productId: product.id, quantity: 1 }],
-      })
+    const response = await client.post('/transactions').json({
+      name: 'live tester',
+      email: 'live.tester@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+      products: [{ productId: product.id, quantity: 1 }],
+    })
 
     response.assertStatus(201)
     const body = (await response.body()) as {
@@ -87,6 +87,7 @@ test.group('Gateway Live Integration', (group) => {
         name: 'Gateway 1',
         priority: 1,
         isActive: true,
+        driver: 'gateway_1',
         url: `http://${gatewayMockHost}:${gateway1Port}`,
       }
     )
@@ -96,6 +97,7 @@ test.group('Gateway Live Integration', (group) => {
         name: 'Gateway 2',
         priority: 2,
         isActive: true,
+        driver: 'gateway_2',
         url: `http://${gatewayMockHost}:${gateway2Port}`,
       }
     )
@@ -104,15 +106,13 @@ test.group('Gateway Live Integration', (group) => {
     const token = await createBearerToken(finance)
     const product = await Product.create({ name: 'Refund Product', amount: 1000, quantity: 5 })
 
-    const createResponse = await client
-      .post('/transactions')
-      .json({
-        name: 'refund tester',
-        email: 'refund.tester@email.com',
-        cardNumber: '5569000000006063',
-        cvv: '010',
-        products: [{ productId: product.id, quantity: 1 }],
-      })
+    const createResponse = await client.post('/transactions').json({
+      name: 'refund tester',
+      email: 'refund.tester@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+      products: [{ productId: product.id, quantity: 1 }],
+    })
 
     createResponse.assertStatus(201)
     const createdBody = (await createResponse.body()) as {

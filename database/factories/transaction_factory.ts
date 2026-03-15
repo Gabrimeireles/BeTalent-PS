@@ -29,6 +29,7 @@ export const TransactionFactory = factory
       name: gatewayName,
       priority: 1,
       is_active: true,
+      driver: 'gateway_1',
       url: `https://${gatewayName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.local`,
       created_at: new Date(),
       updated_at: new Date(),

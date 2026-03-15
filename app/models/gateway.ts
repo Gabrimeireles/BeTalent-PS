@@ -14,6 +14,9 @@ export default class Gateway extends BaseModel {
   @column({ columnName: 'is_active' })
   declare isActive: boolean
 
+  @column()
+  declare driver: string
+
   @column({ columnName: 'url' })
   declare url: string
 

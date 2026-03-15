@@ -18,6 +18,7 @@ export default class extends BaseSeeder {
         name: 'Gateway 1',
         priority: 1,
         isActive: true,
+        driver: 'gateway_1',
         url: gateway1Url,
       }
     )
@@ -28,6 +29,7 @@ export default class extends BaseSeeder {
         name: 'Gateway 2',
         priority: 2,
         isActive: true,
+        driver: 'gateway_2',
         url: gateway2Url,
       }
     )

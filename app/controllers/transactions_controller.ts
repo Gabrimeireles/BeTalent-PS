@@ -7,7 +7,7 @@ import Client from '#models/client'
 import db from '@adonisjs/lucid/services/db'
 import { createTransactionValidator } from '#validators/transaction'
 import ClientService from '#services/client_service'
-import GatewayService, { GatewayServiceError } from '#services/gateway_service'
+import GatewayService, { GatewayServiceError } from '#services/gateway/gateway_service'
 import TransactionTransformer from '#transformers/transaction_transformer'
 
 export default class TransactionsController {
@@ -39,9 +39,7 @@ export default class TransactionsController {
     const productIds = [...new Set(payload.products.map((item) => item.productId))]
     try {
       const transaction = await db.transaction(async (trx) => {
-        const products = await Product.query({ client: trx })
-          .whereIn('id', productIds)
-          .forUpdate()
+        const products = await Product.query({ client: trx }).whereIn('id', productIds).forUpdate()
         const productsMap = new Map(products.map((product) => [product.id, product]))
 
         const missingProductIds = productIds.filter((productId) => !productsMap.has(productId))

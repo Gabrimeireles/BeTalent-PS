@@ -3,7 +3,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import Gateway from '#models/gateway'
 import Transaction from '#models/transaction'
 import Client from '#models/client'
-import GatewayService from '#services/gateway_service'
+import GatewayService from '#services/gateway/gateway_service'
 
 type FetchMock = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
 
@@ -44,6 +44,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: 1,
       isActive: true,
+      driver: 'gateway_1',
       url: gateway1BaseUrl,
     })
 
@@ -51,6 +52,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: 2,
       isActive: true,
+      driver: 'gateway_2',
       url: gateway2BaseUrl,
     })
 
@@ -97,6 +99,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: 1,
       isActive: true,
+      driver: 'gateway_1',
       url: gateway1BaseUrl,
     })
 
@@ -104,6 +107,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: 2,
       isActive: true,
+      driver: 'gateway_2',
       url: gateway2BaseUrl,
     })
 
@@ -156,6 +160,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway Inactive ${crypto.randomUUID()}`,
       priority: 1,
       isActive: false,
+      driver: 'gateway_1',
       url: inactiveGatewayBaseUrl,
     })
 
@@ -163,6 +168,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 2 Active ${crypto.randomUUID()}`,
       priority: 2,
       isActive: true,
+      driver: 'gateway_2',
       url: activeGatewayBaseUrl,
     })
 
@@ -201,6 +207,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 1 Unit ${crypto.randomUUID()}`,
       priority: 1,
       isActive: true,
+      driver: 'gateway_1',
       url: gateway1BaseUrl,
     })
 
@@ -252,6 +259,7 @@ test.group('GatewayService', (group) => {
       name: `Gateway 2 Unit ${crypto.randomUUID()}`,
       priority: 2,
       isActive: true,
+      driver: 'gateway_2',
       url: gateway2BaseUrl,
     })
 
