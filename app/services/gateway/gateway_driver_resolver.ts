@@ -1,4 +1,4 @@
-import Gateway from '#models/gateway'
+import type Gateway from '#models/gateway'
 import Gateway1Driver from '#services/gateway/drivers/gateway_1_driver'
 import Gateway2Driver from '#services/gateway/drivers/gateway_2_driver'
 import {

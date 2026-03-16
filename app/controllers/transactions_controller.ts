@@ -97,7 +97,7 @@ export default class TransactionsController {
           await product.save()
         }
 
-        const transaction = await Transaction.create(
+        const createdTransaction = await Transaction.create(
           {
             clientId: client.id,
             gatewayId: chargeResult.gateway.id,
@@ -111,14 +111,14 @@ export default class TransactionsController {
 
         await TransactionProduct.createMany(
           payload.products.map((item) => ({
-            transactionId: transaction.id,
+            transactionId: createdTransaction.id,
             productId: item.productId,
             quantity: item.quantity,
           })),
           { client: trx }
         )
 
-        return transaction
+        return createdTransaction
       })
 
       const [serialized] = await this.serializeTransactions([transaction])

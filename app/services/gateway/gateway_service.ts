@@ -1,5 +1,5 @@
 import Gateway from '#models/gateway'
-import Transaction from '#models/transaction'
+import type Transaction from '#models/transaction'
 import GatewayDriverResolver from '#services/gateway/gateway_driver_resolver'
 import {
   GatewayServiceError,

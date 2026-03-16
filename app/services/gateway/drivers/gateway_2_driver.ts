@@ -1,5 +1,5 @@
-import Gateway from '#models/gateway'
-import Transaction from '#models/transaction'
+import type Gateway from '#models/gateway'
+import type Transaction from '#models/transaction'
 import {
   GatewayServiceError,
   type GatewayChargePayload,
