@@ -119,8 +119,8 @@ jobs:
           	GATEWAY2_BASE_URL=http://gateways-mock:3002
           	VERSION=${{ secrets.HOMOLOG_VERSION }}
           	BUILD_SHA=${{ github.event.workflow_run.head_sha || github.sha }}
-          	DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           	ENVFILE
+          	echo "DEPLOY_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> .env.backend
           	chmod 600 .env.backend
 
           	echo "Preparing compose env..."
