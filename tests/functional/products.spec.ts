@@ -38,9 +38,7 @@ test.group('Products', (group) => {
     const token = await createBearerToken(admin)
     await ProductFactory.createMany(2)
 
-    const response = await client
-      .get('/products')
-      .header('Authorization', `Bearer ${token}`)
+    const response = await client.get('/products').header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
     const body = (await response.body()) as any
@@ -112,9 +110,7 @@ test.group('Products', (group) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
 
-    const response = await client
-      .get('/products')
-      .header('Authorization', `Bearer ${token}`)
+    const response = await client.get('/products').header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(403)
     response.assertBodyContains({

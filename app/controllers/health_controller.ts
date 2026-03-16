@@ -26,7 +26,9 @@ export default class HealthController {
     } catch (error) {
       return response.serviceUnavailable({
         status: 'error',
-        error: { db: { status: 'down', message: error instanceof Error ? error.message : String(error) } },
+        error: {
+          db: { status: 'down', message: error instanceof Error ? error.message : String(error) },
+        },
         details: { db: { status: 'down' } },
       })
     }

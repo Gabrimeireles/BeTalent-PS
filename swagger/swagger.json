@@ -108,15 +108,16 @@
         "properties": {
           "priority": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 1
           }
         }
       },
-      "ProductBody": {
+      "CreateProductBody": {
         "type": "object",
         "required": [
           "name",
-          "amount"
+          "amount",
+          "quantity"
         ],
         "properties": {
           "name": {
@@ -127,6 +128,28 @@
           "amount": {
             "type": "integer",
             "minimum": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "UpdateProductBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },
@@ -625,7 +648,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProductBody"
+                "$ref": "#/components/schemas/CreateProductBody"
               }
             }
           }
@@ -707,7 +730,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProductBody"
+                "$ref": "#/components/schemas/UpdateProductBody"
               }
             }
           }
@@ -846,6 +869,11 @@
           "Transactions"
         ],
         "summary": "Create transaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -869,6 +897,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
           },
           "422": {
             "description": "Validation error"

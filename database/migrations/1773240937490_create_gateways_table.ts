@@ -9,6 +9,7 @@ export default class extends BaseSchema {
       table.string('name').notNullable().unique()
       table.integer('priority').unsigned().notNullable().defaultTo(1)
       table.boolean('is_active').notNullable().defaultTo(true)
+      table.string('driver').notNullable().defaultTo('gateway_1')
       table.string('url').notNullable().unique()
 
       table.timestamp('created_at')

@@ -13,12 +13,7 @@
 */
 
 import { Bouncer } from '@adonisjs/bouncer'
-import {
-  canManageProducts,
-  canManageUsers,
-  canRefund,
-  isAdmin,
-} from '#services/role_permissions'
+import { canManageProducts, canManageUsers, canRefund, isAdmin } from '#services/role_permissions'
 
 /**
  * Delete the following ability to start from

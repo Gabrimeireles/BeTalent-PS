@@ -61,15 +61,24 @@ export const openApiSpec = {
         type: 'object',
         required: ['priority'],
         properties: {
-          priority: { type: 'integer', minimum: 0 },
+          priority: { type: 'integer', minimum: 1 },
         },
       },
-      ProductBody: {
+      CreateProductBody: {
         type: 'object',
-        required: ['name', 'amount'],
+        required: ['name', 'amount', 'quantity'],
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 120 },
           amount: { type: 'integer', minimum: 1 },
+          quantity: { type: 'integer', minimum: 0 },
+        },
+      },
+      UpdateProductBody: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 120 },
+          amount: { type: 'integer', minimum: 1 },
+          quantity: { type: 'integer', minimum: 0 },
         },
       },
       TransactionBody: {
@@ -317,7 +326,7 @@ export const openApiSpec = {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/ProductBody' },
+              schema: { $ref: '#/components/schemas/CreateProductBody' },
             },
           },
         },
@@ -351,7 +360,7 @@ export const openApiSpec = {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/ProductBody' },
+              schema: { $ref: '#/components/schemas/UpdateProductBody' },
             },
           },
         },
@@ -413,6 +422,7 @@ export const openApiSpec = {
       post: {
         tags: ['Transactions'],
         summary: 'Create transaction',
+        security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -432,6 +442,7 @@ export const openApiSpec = {
             },
           },
           '422': { description: 'Validation error' },
+          '401': { description: 'Unauthorized' },
           '502': { description: 'Gateway integration failed' },
         },
       },

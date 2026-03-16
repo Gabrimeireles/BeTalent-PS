@@ -21,9 +21,7 @@ test.group('Clients', (group) => {
     const token = await createBearerToken(user)
     await ClientFactory.createMany(2)
 
-    const response = await client
-      .get('/clients')
-      .header('Authorization', `Bearer ${token}`)
+    const response = await client.get('/clients').header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
     const body = (await response.body()) as any
@@ -82,9 +80,7 @@ test.group('Clients', (group) => {
     const user = await UserFactory.merge({ role: 'USER' }).create()
     const token = await createBearerToken(user)
 
-    const response = await client
-      .get('/clients/99999')
-      .header('Authorization', `Bearer ${token}`)
+    const response = await client.get('/clients/99999').header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(404)
     response.assertBodyContains({ message: 'Client not found' })

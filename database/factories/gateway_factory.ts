@@ -8,6 +8,7 @@ export const GatewayFactory = factory
       name,
       priority: 1,
       isActive: true,
+      driver: 'gateway_1',
       url: `https://${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.local`,
     }
   })

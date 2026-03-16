@@ -320,8 +320,10 @@ Swagger local:
 
 Swagger da aplicacao publica:
 
-- UI: `https://be-talent.grmeireles.dev/docs`
+- UI: `https://be-talent.grmeireles.dev/docs/`
 - OpenAPI JSON: `https://be-talent.grmeireles.dev/docs/openapi.json`
+
+Observacao: a URL da UI publica deve ser acessada com barra final (`/docs/`).
 
 Os endpoints publicos acima foram validados durante a geracao deste README.
 
@@ -349,3 +351,18 @@ Nesse caso, os mocks precisam estar acessiveis nas portas configuradas pelas var
 - O controle de acesso por perfil cobre cenarios administrativos, operacionais e financeiros.
 - O fluxo de transacao contempla criacao, consulta e estorno.
 - O projeto ja possui arquivos para execucao local e via Docker, o que reduz o esforco de setup para avaliacao.
+
+## Refactor dos gateways
+
+O fluxo de integracao com gateways foi refatorado para um modelo baseado em drivers, com o objetivo de reduzir acoplamento e facilitar evolucao:
+
+- Contrato comum de integracao em `app/services/gateway/payment_gateway_driver.ts`.
+- Implementacoes especificas por provedor em `app/services/gateway/drivers/`.
+- Resolucao do driver correto por gateway em `app/services/gateway/gateway_driver_resolver.ts`.
+- Orquestracao central de cobranca e estorno em `app/services/gateway/gateway_service.ts`.
+
+Beneficios diretos no case:
+
+- Inclusao de novos gateways sem alterar o fluxo principal de transacoes.
+- Regras isoladas por provedor (autenticacao, payload, parse de resposta e tratamento de erro).
+- Testes mais simples e direcionados por driver e por fluxo de orquestracao.

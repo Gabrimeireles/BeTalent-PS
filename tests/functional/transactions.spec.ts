@@ -29,15 +29,13 @@ test.group('Transactions', (group) => {
   test('validates payload when email is invalid', async ({ client, assert }) => {
     const product = await ProductFactory.merge({ quantity: 3 }).create()
 
-    const response = await client
-      .post('/transactions')
-      .json({
-        name: 'tester',
-        email: 'invalid-email',
-        cardNumber: '5569000000006063',
-        cvv: '010',
-        products: [{ productId: product.id, quantity: 1 }],
-      })
+    const response = await client.post('/transactions').json({
+      name: 'tester',
+      email: 'invalid-email',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+      products: [{ productId: product.id, quantity: 1 }],
+    })
 
     response.assertStatus(422)
     const body = (await response.body()) as any
@@ -50,18 +48,16 @@ test.group('Transactions', (group) => {
     const productA = await ProductFactory.merge({ amount: 1000, quantity: 3 }).create()
     const productB = await ProductFactory.merge({ amount: 500, quantity: 2 }).create()
 
-    const response = await client
-      .post('/transactions')
-      .json({
-        name: 'tester',
-        email: 'tester@email.com',
-        cardNumber: '5569000000006063',
-        cvv: '010',
-        products: [
-          { productId: productA.id, quantity: 2 },
-          { productId: productB.id, quantity: 1 },
-        ],
-      })
+    const response = await client.post('/transactions').json({
+      name: 'tester',
+      email: 'tester@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '010',
+      products: [
+        { productId: productA.id, quantity: 2 },
+        { productId: productB.id, quantity: 1 },
+      ],
+    })
 
     response.assertStatus(201)
 
@@ -104,15 +100,13 @@ test.group('Transactions', (group) => {
     await GatewayFactory.merge({ priority: 1, isActive: true }).create()
     const product = await ProductFactory.merge({ quantity: 3 }).create()
 
-    const response = await client
-      .post('/transactions')
-      .json({
-        name: 'tester',
-        email: 'tester@email.com',
-        cardNumber: '5569000000006063',
-        cvv: '10',
-        products: [{ productId: product.id, quantity: 1 }],
-      })
+    const response = await client.post('/transactions').json({
+      name: 'tester',
+      email: 'tester@email.com',
+      cardNumber: '5569000000006063',
+      cvv: '10',
+      products: [{ productId: product.id, quantity: 1 }],
+    })
 
     response.assertStatus(422)
     const body = (await response.body()) as any
@@ -125,9 +119,7 @@ test.group('Transactions', (group) => {
     const token = await createBearerToken(user)
     await TransactionFactory.createMany(2)
 
-    const response = await client
-      .get('/transactions')
-      .header('Authorization', `Bearer ${token}`)
+    const response = await client.get('/transactions').header('Authorization', `Bearer ${token}`)
 
     response.assertStatus(200)
     const body = (await response.body()) as any
